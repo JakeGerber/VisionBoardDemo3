@@ -23,7 +23,7 @@ stockfish = Stockfish(path = "stockfish/stockfish-windows-x86-64-avx2.exe",
                           "UCI_Elo": elo
                       })
 stockfish.set_skill_level(skill_level)
-board = chess.Board("K6q/q6q/k7/8/8/8/8/8 w - -")
+board = chess.Board()
 move_number = 1
 print("Stockfish Setup Successful")
 
@@ -45,8 +45,6 @@ while True:
     # Check for check.
     if (board.is_check()): print("Check for " + ("White" if current_move else "Black") + "!")
 
-    print(board.legal_moves)
-    
     # Ask the player or stockfish for their move.
     if (current_move == is_white):  # Stockfish's turn (Currently W and Stockfish W or currently B and Stockfish B)
         move = stockfish.get_best_move()
