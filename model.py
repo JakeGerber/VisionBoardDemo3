@@ -3,7 +3,7 @@ from os.path import isfile, join
 
 import math
 import numpy as np
-import scipy.cluster.hierarchy as cluster
+import sklearn.cluster
 import matplotlib.pyplot as plt
 
 import cv2 as cv
@@ -22,26 +22,24 @@ import cv2 as cv
 # Piece Recognition:
 # - CNN (100, 3, 3, 3) or InceptionV3
 
-# Returns the intersection point between two lines (each defined by the pair of points they join)
-def intersection_point(l1, l2):
+# Returns the slope-intercept components for a given line
+def slope_intercept(l):
     # Convert to y = mx + b for both lines.
-    x11, x12 = l1[0][0], l1[1][0]
-    y11, y12 = l1[0][1], l1[1][1]
+    x1, x2 = l[0][0], l[1][0]
+    y1, y2 = l[0][1], l[1][1]
     
     # Check for vertical line x=x11
-    if (x12 == x11):  m1, b1 = None, x11
+    if (x2 == x1):  m, b = None, x1
     else:
-        m1 = (y12-y11)/(x12-x11)
+        m = (y2-y1)/(x2-x1)
         # y = m(x-x0) + y0 --> y = mx + (y0 - m*x0)
-        b1 = y11 - m1 * x11
-    
-    x21, x22 = l2[0][0], l2[1][0]
-    y21, y22 = l2[0][1], l2[1][1]
-    # Check for vertical line x=x21
-    if (x22 == x21): m2, b2 = None, x21
-    else:
-        m2 = (y22-y21)/(x22-x21)
-        b2 = y21 - m2 * x21
+        b = y1 - m * x1
+    return m, b
+
+# Returns the intersection point between two lines (each defined by the pair of points they join)
+def intersection_point(l1, l2):
+    m1, b1 = slope_intercept(l1)
+    m2, b2 = slope_intercept(l2)
 
     # Compute intersection point
     if (m1 == m2): return None # Lines are parallel
@@ -56,45 +54,71 @@ def intersection_point(l1, l2):
         y_inter = m1 * x_inter + b1
     return (x_inter, y_inter)
 
-if __name__ == "__main__":
-    # Gather and read the image.
-    train_files = listdir("Data/train")
-    while True:
-        imname = str(int(np.random.randint(0, 4886)))
-        imname += (4-len(imname))*"0"+".png"
-        if (imname in train_files): break
-    im = cv.imread("Data/train/" + imname)
-    height, width, _ = im.shape
-    
+# Given an image of a chessboard and its corresponding FEN string, split it into a collection of 64 tiles
+# labeled by the pieces (or lack thereof) which occupy that tile.
+# Returns a 64 element array of tuples corresponding to tiles to be passed into the piece classifier and the
+# corresponding label for that tile.
+def board_localization(image, fen):
+    height, width, _ = image.shape
     # Canny edge detector followed by a Hough Transformation to roughly find all of the lines in the image.
-    edges = cv.Canny(im, 200, 400)
+    edges = cv.Canny(image, 200, 400)
     # Probabilistic Hough Transform
     hough_lines = cv.HoughLinesP(edges, 1, np.pi / 180, 50, None, 50, 10)
     
-    # hough_lines = cv.HoughLines(edges, 1, np.pi / 180, 50, None, 50, 10)
-    # print(str(len(hough_lines)) + " detected.")
-    # hough_lines = [(l[0][0], l[0][1]) for l in hough_lines] # (r, theta) pairs for each polar line
-
-    # def angle_metric(l1, l2): return min(l1[1], l2[1])  # Define the metric for the clustering algorithm.
-    # linkage_matrix = cluster.linkage(hough_lines, method = 'single', metric = angle_metric)
-    # # https://stackoverflow.com/questions/21638130/tutorial-for-scipy-cluster-hierarchy
-    # clusters = cluster.fcluster(linkage_matrix, 2, criterion = 'maxclust')
-    # print(clusters)
-
     # Plot the lines on the original image
-    lines = []
+    scale_factor = 20
+    lines, angles = [], []
     for i in range(len(hough_lines)):
         l = hough_lines[i][0]
         # Line is given by (1 - t) * (l[0], l[1]) + t * (l[2], l[3]) for t = [-99, 99]
-        # So extend line by doing t in [-99, 100]
-        p1 = (100 * l[0] - 99 * l[2], 100 * l[1] - 99 * l[3])
-        p2 = (-99 * l[0] + 100 * l[2], -99 * l[1] + 100 * l[3])
+        # So extend line by doing t in [-scale_factor + 1, scale_factor]
+        p1 = (scale_factor * l[0] - (scale_factor-1) * l[2], scale_factor * l[1] - (scale_factor-1) * l[3])
+        p2 = (-(scale_factor-1) * l[0] + scale_factor * l[2], -(scale_factor-1) * l[1] + scale_factor * l[3])
+        angle = math.atan2(l[3]-l[1], l[2]-l[0])
         lines.append([p1, p2])
-        cv.line(im, p1, p2, (0,255,0), 3, cv.LINE_AA)
-    intersection_points = []
+        angles.append(angle)
+
+    # Randomly sample two lines in order to find the horizontal and vertical axes
+    axis_vec_1, axis_vec_2 = None, None
+    dot_product_tolerance = 0.1
+    while True:
+        i = np.random.randint(0, len(lines))
+        while True:
+            j = np.random.randint(0, len(lines))
+            if (i != j): break
+        l1, l2 = lines[i], lines[j]
+        # Slope vectors for each line
+        vec1, vec2 = (l1[1][0] - l1[0][0], l1[1][1]-l1[0][1]), (l2[1][0] - l2[0][0], l2[1][1]-l2[0][1])
+        mag1, mag2 = math.sqrt(vec1[0]*vec1[0] + vec1[1]*vec1[1]), math.sqrt(vec2[0]*vec2[0] + vec2[1]*vec2[1])
+        vec1, vec2 = (vec1[0]/mag1, vec1[1]/mag1), (vec2[0]/mag2, vec2[1]/mag2)
+        # Dot product should be within tolerance of zero for lines to be orthogonal
+        dot_product = vec1[0] * vec2[0] + vec1[1] * vec2[1]
+        if (abs(dot_product) < dot_product_tolerance):
+            axis_vec_1, axis_vec_2 = vec1, vec2
+            break
+        
+    line_group_1, line_group_2 = [], []
     for i in range(len(lines)):
+        l = lines[i]
+        vec = (l[1][0] - l[0][0], l[1][1]-l[0][1])
+        mag = math.sqrt(vec[0]*vec[0] + vec[1]*vec[1])
+        vec = (vec[0]/mag, vec[1]/mag)
+        dot_product = vec[0] * axis_vec_1[0] + vec[1] * axis_vec_1[1]
+        if (1-abs(dot_product) < dot_product_tolerance): line_group_1.append(i)
+        else:
+            dot_product = vec[0] * axis_vec_2[0] + vec[1] * axis_vec_2[1]
+            if (1-abs(dot_product) < dot_product_tolerance): line_group_2.append(i)
+
+    for i in line_group_1:
+        cv.line(im, lines[i][0], lines[i][1], (0, 255, 0), 3, cv.LINE_AA)
+    for i in line_group_2:
+        cv.line(im, lines[i][0], lines[i][1], (255, 0, 0), 3, cv.LINE_AA)
+        
+    # Compute the intersection points between the lines
+    intersection_points = []
+    for i in line_group_1:
         l1 = lines[i]
-        for j in range(i + 1, len(lines)):
+        for j in line_group_2:
             l2 = lines[j]
             inter_point = intersection_point(l1, l2)
             if (inter_point != None and 0 <= inter_point[0] < width and 0 <= inter_point[1] < height):
@@ -103,10 +127,20 @@ if __name__ == "__main__":
                 intersection_points.append((x, y))
                 cv.circle(im, (x, y), 5, (0,0,255), -1)
 
-    #cv.imshow("Canny Edge Detection", edges)
+    # cv.imshow("Canny Edge Detection", edges)
     cv.imshow("Chessboard with Detected Lines", im)
     cv.imwrite("test.png", im)
     cv.waitKey()
+
+if __name__ == "__main__":
+    # Gather and read the image.
+    train_files = listdir("Data/train")
+    while True:
+        imname = str(int(np.random.randint(0, 4886)))
+        imname += (4-len(imname))*"0"+".png"
+        if (imname in train_files): break
+    im = cv.imread("Data/train/" + imname)
+    board_localization(im, None)
     
     # train = True
     # filepath = "chess_classifier.keras"
