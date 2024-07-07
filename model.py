@@ -4,8 +4,6 @@ import time
 
 import math
 import numpy as np
-import sklearn.cluster
-import matplotlib.pyplot as plt
 
 import cv2 as cv
 # import keras
