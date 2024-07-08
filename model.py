@@ -42,6 +42,10 @@ import cv2 as cv
 #         y_inter = m1 * x_inter + b1
 #     return (x_inter, y_inter)
 
+# TODO:
+# - Add flag to function to specify if corners are for 8x8 or 6x6 grid.
+# - Shift 6x6 corners to 8x8.
+
 # Given an image of a chessboard and its metadata, split it into a collection of 64 tiles
 # labeled by the pieces (or lack thereof) which occupy that tile.
 # Returns a 64 element array of tile images and their labels.
@@ -201,6 +205,8 @@ def board_localization(image, piece_data, corners, white_view):
     tiles = np.zeros((10, 10, 4))  # Tiles are represented by the top-left and bottom-right points.
     dx, dy = abs(warped_bottom_right[0] - warped_top_left[0]), abs(warped_bottom_right[1] - warped_top_left[1])
     sx, sy = dx/8, dy/8
+    # TODO: Here you would shift warped_top_left and warped_bottom_right if they correspond to the corners of the inner
+    # 6x6 grid. 
     for i in range(-2, 8):
         y = warped_top_left[1] + sy * i
         next_y = warped_top_left[1] + sy * i + sy
@@ -230,10 +236,6 @@ def board_localization(image, piece_data, corners, white_view):
             min_yw, max_yw = int(min(p1w[1], p2w[1], p3w[1], p4w[1])), int(max(p1w[1], p2w[1], p3w[1], p4w[1]))
             crop = cv.resize(warped[min_yw:max_yw, min_xw:max_xw], (crop_width, crop_height))
             images.append(crop)
-            print(square, label)
-            cv.imshow("Crop", crop)
-            cv.imshow("Original", im)
-            cv.waitKey()
     return images, labels
 
 if __name__ == "__main__":
