@@ -42,10 +42,9 @@ import cv2 as cv
 #         y_inter = m1 * x_inter + b1
 #     return (x_inter, y_inter)
 
-# Given an image of a chessboard and its corresponding FEN string, split it into a collection of 64 tiles
+# Given an image of a chessboard and its metadata, split it into a collection of 64 tiles
 # labeled by the pieces (or lack thereof) which occupy that tile.
-# Returns a 64 element array of tuples corresponding to tiles to be passed into the piece classifier and the
-# corresponding label for that tile.
+# Returns a 64 element array of tile images and their labels.
 def board_localization(image, piece_data, corners, white_view):
     # # Canny edge detector followed by a Hough Transformation to roughly find all of the lines in the image.
     # edges = cv.Canny(image, 100, 150, apertureSize = 3)
@@ -192,16 +191,12 @@ def board_localization(image, piece_data, corners, white_view):
     dest_points = np.asarray([top_left, (top_right[0], y), (x, bottom_left[1]), (top_right[0], bottom_left[1])], dtype = np.float32)
     A = cv.getPerspectiveTransform(source_points, dest_points)
     warped = cv.warpPerspective(im, A, (width, height))
-    for p in corners:
-        x_prime, y_prime, t = np.dot(A, np.asarray([p[0], p[1], 1]))
     
-    # Find all interior points
+    # Break into tiles
     x_prime, y_prime, t = np.dot(A, np.asarray([top_left[0], top_left[1], 1]))
     warped_top_left = (round(x_prime/t), round(y_prime/t))
     x_prime, y_prime, t = np.dot(A, np.asarray([bottom_right[0], bottom_right[1], 1]))
     warped_bottom_right = (round(x_prime/t), round(y_prime/t))
-    
-    # Break into tiles
     # Pad tiles to include one tile to the left and right and two tiles above the chessboard.
     tiles = np.zeros((10, 10, 4))  # Tiles are represented by the top-left and bottom-right points.
     dx, dy = abs(warped_bottom_right[0] - warped_top_left[0]), abs(warped_bottom_right[1] - warped_top_left[1])
@@ -235,6 +230,10 @@ def board_localization(image, piece_data, corners, white_view):
             min_yw, max_yw = int(min(p1w[1], p2w[1], p3w[1], p4w[1])), int(max(p1w[1], p2w[1], p3w[1], p4w[1]))
             crop = cv.resize(warped[min_yw:max_yw, min_xw:max_xw], (crop_width, crop_height))
             images.append(crop)
+            print(square, label)
+            cv.imshow("Crop", crop)
+            cv.imshow("Original", im)
+            cv.waitKey()
     return images, labels
 
 if __name__ == "__main__":
