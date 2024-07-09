@@ -3,3 +3,4 @@ stockfish
 tensorflow
 keras
 numpy
+opencv-python
