@@ -10,16 +10,16 @@ while True:
 
     frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    GRID = (5, 5)
+    GRID = (8, 8)
 
     img_captured_corners = None
 
 
-    found, corners = cv2.findChessboardCorners(frame2, GRID, None)
+    found, corners = cv2.findChessboardCorners(frame2, GRID, flags= cv2.CALIB_CB_FAST_CHECK)
 
     print("found: ", found, " corners: ", corners)
 
-    cv2.imshow("Camera View", frame)
+    # cv2.imshow("Camera View", frame)
 
     
     if found:
@@ -29,7 +29,7 @@ while True:
     # else:
     #     cv2.imshow("camera view", frame2)
 
-    #cv2.imshow("img_cap", img_captured_corners)
+    #cv2.imshow("img_cap", img_captured_corners)q
 
 
     
