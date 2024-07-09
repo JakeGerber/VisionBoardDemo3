@@ -3,14 +3,30 @@ import json
 
 import math
 import numpy as np
-import sklearn.cluster
-import matplotlib.pyplot as plt
+# import sklearn.cluster
+# import matplotlib.pyplot as plt
 
 import cv2 as cv
- 
-# import keras
-# from keras.applications.inception_v3 import InceptionV3
-# from keras import layers
+
+import tensorflow as tf
+import keras
+# from keras._tf_keras.keras.applications.inception_v3 import InceptionV3
+from keras.applications import InceptionV3
+# from keras.applications.InceptionV3 import InceptionV3
+from keras import layers
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Model breakdown:
 # Board Localization:
@@ -24,6 +40,24 @@ import cv2 as cv
 
 # Given the bottom-right and top-left points of a rectangle (p1 and p2 respectively), compute the matrix
 # mapping p1 to [s_x, 0] and p2 to [0, s_y]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def compute_homography(p1, p2, s_x, s_y):
     H_inv = np.asarray([[p1[0]/s_x, p2[0]/s_y], [p1[1]/s_x, p2[1]/s_y]])
     return np.linalg.inv(H_inv)
@@ -200,37 +234,43 @@ if __name__ == "__main__":
     pieces = [(p['piece'], p['square'], p['box']) for p in metadata['pieces']]
     board_localization(im, pieces)
     
-    # train = True
-    # filepath = "chess_classifier.keras"
 
-    # # Load test dataset.
-    # test_data_x, test_data_y = None, None
 
-    # # Train the model if requested.
-    # if (train):
-    #     # Load training dataset
-    #     train_data_x, train_data_y = None, None
-    #     valid_data_x, valid_data_y = None, None
-        
-    #     # Model parameters
-    #     batch_size = 128
-    #     learning_rate = 0.001    # Learning rate for piece classifier.
 
-    #     # Fine-tune InceptionV3 to act as a chess piece classifier
-    #     base_model = InceptionV3(weights = 'imagenet', include_top = False, name = "pc-inception-v3")
-    #     x = keras.GlobalAveragePooling2D(name = "pc-pooling")(base_model.output)
-    #     x = keras.Dense(1024, name = "pc-dense")(x)
-    #     # 2 x (King, Queen, Rook, Bishop, Knight, Pawn) for Black/White
-    #     predictions = keras.Dense(12, activation = "softmax", name = "pc-predictions")(x)
-    #     model = keras.Model(inputs = base_model.input, outputs = predictions)
 
-    #     # Compile, train, and save the dataset
-    #     model.compile(optimizer = keras.optimizers.Adam(learning_rate),
-    #                 loss = keras.losses.CategoricalCrossentropy(),
-    #                 metrics = ['accuracy'])
-    #     model.fit(train_data_x, train_data_y,
-    #             validation_set = (valid_data_x, valid_data_y),
-    #             batch_size = batch_size, validation_batch_size = batch_size)
-    #     model.save(filepath, overwrite = True)
 
-    # # Test the model on the test dataset.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
