@@ -4,8 +4,11 @@ import time
 
 import math
 import numpy as np
-
 import cv2 as cv
+
+import keras
+from keras._tf_keras.keras.applications.inception_v3 import InceptionV3
+from keras._tf_keras.keras.applications.resnet import ResNet101
 
 # Given an image of a chessboard and its metadata, split it into a collection of 64 tiles
 # labeled by the pieces (or lack thereof) which occupy that tile.
@@ -70,17 +73,25 @@ def board_localization(image, piece_data, corners, white_view, inner_grid):
 
     # Crop warped image
     crop_width, crop_height = 75, 125
-    images, labels = [], []
+    images, piece_images, piece_labels, empty_labels = [], [], [], []
     square_to_piece = {piece[1]: piece[0] for piece in piece_data}
     col_letters = 'abcdefgh'
-    labels_to_int = {'E': 0, 'P': 1, 'R': 2, 'N': 3, 'B': 4, 'Q': 5, 'K': 6, 'p': 7, 'r': 8, 'n': 9, 'b': 10, 'q': 11, 'k': 12}
+    labels_to_int = {'P': 1, 'R': 2, 'N': 3, 'B': 4, 'Q': 5, 'K': 6, 'p': 7, 'r': 8, 'n': 9, 'b': 10, 'q': 11, 'k': 12}
     for piece_i in range(8):
         for piece_j in range(8):
             # Find the label
             square = col_letters[piece_j] + str(8-piece_i) if white_view else col_letters[7-piece_j] + str(piece_i + 1)
-            if (square in square_to_piece): label = square_to_piece[square]
-            else: label = 'E'
-            labels.append(labels_to_int[label])
+            if (square in square_to_piece): label = labels_to_int[square_to_piece[square]]
+            else: label = 0
+
+            # Convert labels to one-hot encoding
+            if (label != 0):
+                one_hot = np.zeros(12)
+                one_hot[label - 1] = 1
+                piece_labels.append(one_hot)
+            is_empty = np.zeros(2)
+            is_empty[min(label, 1)] = 1
+            empty_labels.append(is_empty)
 
             # p1w = (X0, Y0)
             # p2w = (X1, Y0)
@@ -105,7 +116,8 @@ def board_localization(image, piece_data, corners, white_view, inner_grid):
             crop = cv.resize(warped[Y0:Y1, min(X0,X1):max(X0,X1)], (crop_width, crop_height))
             if (flip): crop = cv.flip(crop, 1)
             images.append(crop)
-    return images, labels
+            if (label == 0): piece_images.append(crop)
+    return images, piece_images, piece_labels, empty_labels
 
 if __name__ == "__main__":
     
@@ -115,82 +127,109 @@ if __name__ == "__main__":
         pieces = [(p['piece'], p['square'], p['box']) for p in metadata['pieces']]
         corners = metadata['corners']
         white_view = metadata['white_turn']
-
         # Board localization
-        images, labels = board_localization(im, pieces, corners, white_view, False)
-        one_hot_labels, empty_labels = [], []
-        for l in labels:
-            one_hot = np.zeros(13)
-            one_hot[l] = 1
-            one_hot_labels.append(one_hot)
-            is_empty = np.zeros(2)
-            is_empty[min(l, 1)] = 1
-            empty_labels.append(is_empty)
-        del labels
-        return images, one_hot_labels, empty_labels
+        return board_localization(im, pieces, corners, white_view, False)
     
     train = True
     start_time = time.time()
     if train:
         # Gather and read the training and validation datasets.
         train_files = listdir("Data/train")
-        train_images, train_labels, train_empty_labels = [], [], []
+        train_images, train_piece_images, train_piece_labels, train_empty_labels = [], [], [], []
         
         print("Loading training dataset...")
         for imname in train_files:
             x = imname.split('.')
             if (x[1] == "json"): continue
             x = x[0]
-            images, one_hot_labels, empty_labels = gather_data(x)
-            train_images.append(images)
-            train_labels.append(one_hot_labels)
-            train_empty_labels.append(empty_labels)
+            images, piece_images, one_hot_labels, empty_labels = gather_data(x)
+            train_images += images
+            train_piece_images += piece_images
+            train_piece_labels += one_hot_labels
+            train_empty_labels += empty_labels
         
         valid_files = listdir("Data/train")
-        valid_images, valid_labels, valid_empty_labels = [], [], []
+        valid_images, valid_piece_images, valid_piece_labels, valid_empty_labels = [], [], [], []
         
         print("Loading validation dataset...")
         for imname in train_files:
             x = imname.split('.')
             if (x[1] == "json"): continue
             x = x[0]
-            images, one_hot_labels, empty_labels = gather_data(x)
-            valid_images.append(images)
-            valid_labels.append(one_hot_labels)
-            valid_empty_labels.append(empty_labels)
-        
+            images, piece_images, one_hot_labels, empty_labels = gather_data(x)
+            valid_images += images
+            valid_piece_images += piece_images
+            valid_piece_labels += one_hot_labels
+            valid_empty_labels += empty_labels
+
         print("Datasets loaded in %.3f seconds." % (time.time() - start_time))
 
-    # filepath = "chess_classifier.keras"
+        #=======================================#
+        # Occupancy Classification (Resnet 101) #
+        #=======================================#
 
-    # # Load test dataset.
-    # test_data_x, test_data_y = None, None
+        # Model parameters
+        batch_size = 128
+        learning_rate = 0.001  
 
-    # # Train the model if requested.
-    # if (train):
-    #     # Load training dataset
-    #     train_data_x, train_data_y = None, None
-    #     valid_data_x, valid_data_y = None, None
+        # Make Base Model
+        base_model = ResNet101(weights = 'imagenet', input_shape= (75, 75, 3), include_top = False, name = "oc-resnet101")
+        # Freeze base_model
+        base_model.trainable = True
+        inputs = keras.Input(shape = (75, 125, 3))
+
+        # Calculate Outputs
+        x = base_model(inputs, training = True)
+        x = keras.layers.GlobalAveragePooling2D(name = "oc-pooling") * (base_model.output) 
+        x = keras.Dense(1024, name = "oc-dense")(x)
+        x = keras.Dense(256, name = "oc-dense2")(x)
+        output = keras.layers.Dense(2, activation = "softmax", name = "oc-predictions")(x)
+
+        # Make Model
+        model = keras.Model(inputs = inputs, outputs = output)
+        model.summary()
+
+        # Compile, Train, And Save Model
+        model.compile(optimizer = keras.optimizers.Adam(learning_rate),
+                      loss = keras.losses.CategoricalCrossentropy(),
+                      metrics = ['accuracy'])
         
-    #     # Model parameters
-    #     batch_size = 128
-    #     learning_rate = 0.001    # Learning rate for piece classifier.
+        num_epochs = 3
+        model.fit(train_images, train_empty_labels,
+                  validation_set = (valid_images, valid_empty_labels), epochs = num_epochs)
+        model.save("occupancy_classifier.keras", overwrite = True)
+        
+        #===================================#
+        # Piece Classification (Resnet 101) #
+        #===================================#
 
-    #     # Fine-tune InceptionV3 to act as a chess piece classifier
-    #     base_model = InceptionV3(weights = 'imagenet', include_top = False, name = "pc-inception-v3")
-    #     x = keras.GlobalAveragePooling2D(name = "pc-pooling")(base_model.output)
-    #     x = keras.Dense(1024, name = "pc-dense")(x)
-    #     # 2 x (King, Queen, Rook, Bishop, Knight, Pawn) for Black/White
-    #     predictions = keras.Dense(12, activation = "softmax", name = "pc-predictions")(x)
-    #     model = keras.Model(inputs = base_model.input, outputs = predictions)
+        # Model parameters
+        batch_size = 128
+        learning_rate = 0.001  
 
-    #     # Compile, train, and save the dataset
-    #     model.compile(optimizer = keras.optimizers.Adam(learning_rate),
-    #                 loss = keras.losses.CategoricalCrossentropy(),
-    #                 metrics = ['accuracy'])
-    #     model.fit(train_data_x, train_data_y,
-    #             validation_set = (valid_data_x, valid_data_y),
-    #             batch_size = batch_size, validation_batch_size = batch_size)
-    #     model.save(filepath, overwrite = True)
+        # Make Base Model
+        base_model = InceptionV3(weights = 'imagenet', input_shape= (75, 75, 3), include_top = False, name = "pc-inception")
+        # Freeze base_model
+        base_model.trainable = True
+        inputs = keras.Input(shape = (75, 125, 3))
 
-    # # Test the model on the test dataset.
+        # Calculate Outputs
+        x = base_model(inputs, training = True)
+        x = keras.layers.GlobalAveragePooling2D(name = "pc-pooling") * (base_model.output) 
+        x = keras.Dense(1024, name = "pc-dense")(x)
+        x = keras.Dense(256, name = "pc-dense2")(x)
+        output = keras.layers.Dense(12, activation = "softmax", name = "pc-predictions")(x)
+
+        # Make Model
+        model = keras.Model(inputs = inputs, outputs = output)
+        model.summary()
+
+        # Compile, Train, And Save Model
+        model.compile(optimizer = keras.optimizers.Adam(learning_rate),
+                      loss = keras.losses.CategoricalCrossentropy(),
+                      metrics = ['accuracy'])
+        
+        num_epochs = 6
+        model.fit(train_piece_images, train_piece_labels,
+                  validation_set = (valid_piece_images, valid_piece_labels), epochs = num_epochs)
+        model.save("piece_classifier.keras", overwrite = True)
