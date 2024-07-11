@@ -13,8 +13,10 @@ from keras._tf_keras.keras.applications.resnet import ResNet101
 # Given an image of a chessboard and its metadata, split it into a collection of 64 tiles
 # labeled by the pieces (or lack thereof) which occupy that tile.
 # Returns a 64 element array of tile images and their labels.
-def board_localization(image, piece_data, corners, white_view, inner_grid):
-    # Identify the corners of the image.
+def board_localization(image, piece_data, corners, white_view, inner_grid, cw, ch, gather_piece_data):
+    # Identify the corners of the image (since corners are not necessarily specified in order of TL -> BR).
+    # Do this by choosing the point with the minimum distance to each corner of the image.
+    # For instance, TL corner is the one closest to (0, 0)
     height, width, _ = image.shape
     top_left, temp = None, -1
     for p in corners:
@@ -42,21 +44,34 @@ def board_localization(image, piece_data, corners, white_view, inner_grid):
             top_right = p
 
     # Fix the top-left corner and find a mapping of the remaining corners to a rectangular grid
+    # Points of this rectangle are the top left corner (x, y), averaging the x-coordinates of the top-right and bottom right corners,
+    # averaging the y-coordinates of the bottom-left and bottom-right corners.
+    # So the rectangle we wish to map to is TL --> (x, y), TR --> (avgX, y), BL --> (x, avgY), BR --> (avgX, avgY)
     x, y = top_left
     source_points = np.asarray([top_left, top_right, bottom_left, bottom_right], dtype = np.float32)
-    dest_points = np.asarray([top_left, (top_right[0], y), (x, bottom_left[1]), (top_right[0], bottom_left[1])], dtype = np.float32)
+    avgX, avgY = round((top_right[0] + bottom_right[0])/2), round((bottom_right[1] + bottom_left[1])/2)
+    dest_points = np.asarray([top_left, (avgX, y), (x, avgY), (avgX, avgY)], dtype = np.float32)
+    
+    # Use OpenCV to do the hard part for me and change perspective so that source points get mapped to destination points.
     A = cv.getPerspectiveTransform(source_points, dest_points)
     warped = cv.warpPerspective(image, A, (width, height))
     
     # Break into tiles
+    # The warped perspective transform A does the following:
+    # Given point (x, y), it gets mapped to (x', y') by
+    # t * [x', y', 1].T = A * [x, y, 1].T
+    # v.T indicates transpose of vector v.
     x_prime, y_prime, t = np.dot(A, np.asarray([top_left[0], top_left[1], 1]))
     warped_top_left = (round(x_prime/t), round(y_prime/t))
     x_prime, y_prime, t = np.dot(A, np.asarray([bottom_right[0], bottom_right[1], 1]))
     warped_bottom_right = (round(x_prime/t), round(y_prime/t))
+
     # Pad tiles to include one tile to the left and right and two tiles above the chessboard.
     tiles = np.zeros((10, 10, 4))  # Tiles are represented by the top-left and bottom-right points.
     dx, dy = abs(warped_bottom_right[0] - warped_top_left[0]), abs(warped_bottom_right[1] - warped_top_left[1])
+    # Tile side lengths in pixels (not perfect squares)
     sx, sy = dx/8, dy/8
+
     # If the corners actually specify the inner 6x6 set of tiles, extend the top left and bottom right so that
     # they reach the corners.
     if (inner_grid):
@@ -68,23 +83,28 @@ def board_localization(image, piece_data, corners, white_view, inner_grid):
         for j in range(-1, 9):
             x = warped_top_left[0] + sx * j
             next_x = warped_top_left[0] + sx * j + sx
+            # (x, y) is the top-left corner, (next_x, next_y) is the bottom-right
             tiles[i][j] = (x, y, next_x, next_y)
     tiles = np.asarray(tiles).reshape(10, 10, 4)
 
     # Crop warped image
-    crop_width, crop_height = 75, 125
     images, piece_images, piece_labels, empty_labels = [], [], [], []
+    
+    # Mappings to help convert labels to one-hot vectors
     square_to_piece = {piece[1]: piece[0] for piece in piece_data}
     col_letters = 'abcdefgh'
     labels_to_int = {'P': 1, 'R': 2, 'N': 3, 'B': 4, 'Q': 5, 'K': 6, 'p': 7, 'r': 8, 'n': 9, 'b': 10, 'q': 11, 'k': 12}
+
+    # Go through each tile (in the warped image) and crop it.
     for piece_i in range(8):
         for piece_j in range(8):
             # Find the label
+            # Input is in algebraic notation and we need to adjust it depending on if the view is from black or white's perspective.
             square = col_letters[piece_j] + str(8-piece_i) if white_view else col_letters[7-piece_j] + str(piece_i + 1)
             if (square in square_to_piece): label = labels_to_int[square_to_piece[square]]
-            else: label = 0
+            else: label = 0 # Empty tile
 
-            # Convert labels to one-hot encoding
+            # Convert labels to one-hot encodings
             if (label != 0):
                 one_hot = np.zeros(12)
                 one_hot[label - 1] = 1
@@ -93,12 +113,20 @@ def board_localization(image, piece_data, corners, white_view, inner_grid):
             is_empty[min(label, 1)] = 1
             empty_labels.append(is_empty)
 
-            # p1w = (X0, Y0)
-            # p2w = (X1, Y0)
-            # p3w = (X0, Y1)
-            # p4w = (X1, Y1)
+            # p1w, p2w, p3w, and p4w are the top-left, top-right, bottom-left, bottom-right points in the warped image
+            # of the region we wish to crop.
+            # p1w = (X0, Y0) = top-left point two units up (and possibly one unit to the left)
+            # p2w = (X1, Y0) = top-right point two units up (and possibly one unit to the right)
+            # p3w = (X0, Y1) = bottom-left point
+            # p4w = (X1, Y1) = bottom-right point
 
             # Linear interpolation of X coordinates so that the crop stretches as we get closer to the edge.
+            # We can linearly move from point P to point Q using a parametric equation.
+            # f(alpha) = (1-alpha) * P + alpha * Q means that f(0) = P and f(1) = Q. Any 0 < alpha < 1 will lie between P and Q
+    
+            # So, for smoothly varying X coordinates, alpha = 0 when near the center and alpha = 1 when near the edge.
+            # P = the x-coordinate of the top-left point two tiles up
+            # Q = the x-coordinate of the top-left point two tiles up and one unit to either the left/right (depends which side of the board we are on).
             flip = False
             if (piece_j <= 3):
                 alpha = abs(3 - piece_j)/3
@@ -112,117 +140,210 @@ def board_localization(image, piece_data, corners, white_view, inner_grid):
             Y0 = round(tiles[piece_i - 2][piece_j][1])
             Y1 = round(tiles[piece_i][piece_j][3])
            
-           # Crop the image
-            crop = cv.resize(warped[Y0:Y1, min(X0,X1):max(X0,X1)], (crop_width, crop_height))
+           # Crop the image to a width and height specified by cw and ch
+            crop = cv.resize(warped[Y0:Y1, min(X0,X1):max(X0,X1)], (cw, ch))
             if (flip): crop = cv.flip(crop, 1)
-            images.append(crop)
-            if (label == 0): piece_images.append(crop)
+            if (not gather_piece_data): images.append(crop)
+            if (label == 0 and gather_piece_data): piece_images.append(crop)
+    
+    # Free memory
+    del tiles, warped
+
     return images, piece_images, piece_labels, empty_labels
 
 if __name__ == "__main__":
     
-    def gather_data(imname):
+    ###################
+    # HYPERPARAMETERS #
+    ###################
+    crop_width, crop_height = 100, 100
+    
+    # Helper function for collecting the data we need for cropping the images
+    def gather_data(imname, cw, ch, gather_piece_data):
         im = cv.imread("Data/train/" + imname + ".png")
         metadata = json.load(open("Data/train/" + imname + ".json"))
         pieces = [(p['piece'], p['square'], p['box']) for p in metadata['pieces']]
         corners = metadata['corners']
         white_view = metadata['white_turn']
         # Board localization
-        return board_localization(im, pieces, corners, white_view, False)
+        return board_localization(im, pieces, corners, white_view, False, cw, ch, gather_piece_data)
     
+    #=================================================#
+    # SET THIS IF YOU WANT TO TRAIN OR TEST THE MODEL #
+    #=================================================#
     train = True
-    start_time = time.time()
-    if train:
+    train_oc = True # Training occupancy classifier = true, otherwise train piece classifier
+    
+    if (train):
+        #=================#
+        # DATA COLLECTION #
+        #=================#
+        start_time = time.time()
         # Gather and read the training and validation datasets.
+        
+        # For small tests of the AI, let's not load the whole dataset.
+        use_up_to = 500  # Set as None if you want to use the whole thing.
+
         train_files = listdir("Data/train")
         train_images, train_piece_images, train_piece_labels, train_empty_labels = [], [], [], []
         
+        # Training dataset
         print("Loading training dataset...")
-        for imname in train_files:
+        for imname in (train_files[:use_up_to] if use_up_to != None else train_files):
             x = imname.split('.')
             if (x[1] == "json"): continue
             x = x[0]
-            images, piece_images, one_hot_labels, empty_labels = gather_data(x)
-            train_images += images
-            train_piece_images += piece_images
-            train_piece_labels += one_hot_labels
-            train_empty_labels += empty_labels
+            images, piece_images, one_hot_labels, empty_labels = gather_data(x, crop_width, crop_height, not train_oc)
+            if (train_oc):
+                train_images += images
+                train_empty_labels += empty_labels
+            else:
+                train_piece_images += piece_images
+                train_piece_labels += one_hot_labels
+        train_images = np.asarray(train_images, dtype = np.float32)
+        train_piece_images = np.asarray(train_piece_images, dtype = np.float32)
+        train_piece_labels = np.asarray(train_piece_labels, dtype = np.float32)
+        train_empty_labels = np.asarray(train_empty_labels, dtype = np.float32)
         
         valid_files = listdir("Data/train")
         valid_images, valid_piece_images, valid_piece_labels, valid_empty_labels = [], [], [], []
         
+        # Validation dataset
         print("Loading validation dataset...")
-        for imname in train_files:
+        for imname in (valid_files[:use_up_to] if use_up_to != None else valid_files):
             x = imname.split('.')
             if (x[1] == "json"): continue
             x = x[0]
-            images, piece_images, one_hot_labels, empty_labels = gather_data(x)
-            valid_images += images
-            valid_piece_images += piece_images
-            valid_piece_labels += one_hot_labels
-            valid_empty_labels += empty_labels
+            images, piece_images, one_hot_labels, empty_labels = gather_data(x, crop_width, crop_height, not train_oc)
+            if (train_oc):
+                valid_images += images
+                valid_empty_labels += empty_labels
+            else:
+                valid_piece_images += piece_images
+                valid_piece_labels += one_hot_labels
+        valid_images = np.asarray(valid_images, dtype = np.float32)
+        valid_piece_images = np.asarray(valid_piece_images, dtype = np.float32)
+        valid_piece_labels = np.asarray(valid_piece_labels, dtype = np.float32)
+        valid_empty_labels = np.asarray(valid_empty_labels, dtype = np.float32)
 
         print("Datasets loaded in %.3f seconds." % (time.time() - start_time))
 
-        #=======================================#
-        # Occupancy Classification (Resnet 101) #
-        #=======================================#
+        # NOTE: ResNet and Inception were having problems so I'm using a simple CNN as a classifier for now just to see if I can get things
+        # working.
 
+    #=======================================#
+    # Occupancy Classification (Resnet 101) #
+    #=======================================#
+
+    if (train and train_oc):
         # Model parameters
         batch_size = 128
-        learning_rate = 0.001  
+        learning_rate = 1e-4
 
-        # Make Base Model
-        base_model = ResNet101(weights = 'imagenet', input_shape= (75, 75, 3), include_top = False, name = "oc-resnet101")
-        # Freeze base_model
-        base_model.trainable = True
-        inputs = keras.Input(shape = (75, 125, 3))
+        # Instantiate model
+        model = keras.Sequential()
+        model.add(keras.Input(shape = (crop_height, crop_width, 3), name = "oc-input"))
 
-        # Calculate Outputs
-        x = base_model(inputs, training = True)
-        x = keras.layers.GlobalAveragePooling2D(name = "oc-pooling") * (base_model.output) 
-        x = keras.Dense(1024, name = "oc-dense")(x)
-        x = keras.Dense(256, name = "oc-dense2")(x)
-        output = keras.layers.Dense(2, activation = "softmax", name = "oc-predictions")(x)
+        # Convolutional layers
+        model.add(keras.layers.Conv2D(filters = 16, kernel_size = (5, 5), strides = (1, 1), name = "oc-conv2d-1"))
+        model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = "oc-maxpool-1"))
 
-        # Make Model
-        model = keras.Model(inputs = inputs, outputs = output)
-        model.summary()
+        model.add(keras.layers.Conv2D(filters = 32, kernel_size = (5, 5), strides = (1, 1), name = "oc-conv2d-2"))
+        model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = "oc-maxpool-2"))
+
+        model.add(keras.layers.Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), name = "oc-conv2d-3"))
+        model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = "oc-maxpool-3"))
+
+        model.add(keras.layers.Flatten())
+
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(1024, name = "oc-dense-1"))
+        model.add(keras.layers.Dropout(0.5, name = "oc-dropout-1"))
+
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(256, name = "oc-dense-2"))
+        model.add(keras.layers.Dropout(0.5, name = "oc-dropout-2"))
+
+        model.add(keras.layers.Dense(2, activation = "softmax", name = "oc-predictions"))
+
+        # # Make Base Model
+        # base_model = ResNet101(weights = 'imagenet', input_shape = (crop_height, crop_width, 3), include_top = False, name = "oc-resnet101")
+        # # Freeze base_model
+        # base_model.trainable = True
+        # inputs = keras.Input(shape = (crop_height, crop_width, 3))
+
+        # # Calculate Outputs
+        # x = base_model(inputs, training = True)
+        # x = keras.layers.GlobalAveragePooling2D(name = "oc-pooling")(base_model.output)
+        # x = keras.layers.Flatten()(x)
+        # x = keras.layers.Dense(1024, name = "oc-dense")(x)
+        # x = keras.layers.Dense(256, name = "oc-dense2")(x)
+        # output = keras.layers.Dense(2, activation = "softmax", name = "oc-predictions")(x)
+
+        # # Make Model
+        # model = keras.Model(inputs = inputs, outputs = output)
 
         # Compile, Train, And Save Model
         model.compile(optimizer = keras.optimizers.Adam(learning_rate),
-                      loss = keras.losses.CategoricalCrossentropy(),
-                      metrics = ['accuracy'])
-        
+                        loss = keras.losses.CategoricalCrossentropy(),
+                        metrics = ['accuracy'])
+
         num_epochs = 3
         model.fit(train_images, train_empty_labels,
-                  validation_set = (valid_images, valid_empty_labels), epochs = num_epochs)
+                  validation_data = (valid_images, valid_empty_labels), epochs = num_epochs, batch_size = batch_size)
         model.save("occupancy_classifier.keras", overwrite = True)
-        
-        #===================================#
-        # Piece Classification (Resnet 101) #
-        #===================================#
+            
+    #===================================#
+    # Piece Classification (Resnet 101) #
+    #===================================#
 
+    if (train and not train_oc):  
         # Model parameters
         batch_size = 128
-        learning_rate = 0.001  
+        learning_rate = 1e-4
 
-        # Make Base Model
-        base_model = InceptionV3(weights = 'imagenet', input_shape= (75, 75, 3), include_top = False, name = "pc-inception")
-        # Freeze base_model
-        base_model.trainable = True
-        inputs = keras.Input(shape = (75, 125, 3))
+        # Instantiate model
+        model = keras.Sequential()
+        model.add(keras.Input(shape = (crop_height, crop_width, 3), name = "pc-input"))
 
-        # Calculate Outputs
-        x = base_model(inputs, training = True)
-        x = keras.layers.GlobalAveragePooling2D(name = "pc-pooling") * (base_model.output) 
-        x = keras.Dense(1024, name = "pc-dense")(x)
-        x = keras.Dense(256, name = "pc-dense2")(x)
-        output = keras.layers.Dense(12, activation = "softmax", name = "pc-predictions")(x)
+        # Convolutional layers
+        model.add(keras.layers.Conv2D(filters = 16, kernel_size = (5, 5), strides = (1, 1), name = "pc-conv2d-1"))
+        model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = "pc-maxpool-1"))
 
-        # Make Model
-        model = keras.Model(inputs = inputs, outputs = output)
-        model.summary()
+        model.add(keras.layers.Conv2D(filters = 32, kernel_size = (5, 5), strides = (1, 1), name = "pc-conv2d-2"))
+        model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = "pc-maxpool-2"))
+
+        model.add(keras.layers.Conv2D(filters = 64, kernel_size = (3, 3), strides = (1, 1), name = "pc-conv2d-3"))
+        model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = "pc-maxpool-3"))
+
+        model.add(keras.layers.Flatten())
+
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(1024, name = "pc-dense-1"))
+        model.add(keras.layers.Dropout(0.5, name = "pc-dropout-1"))
+
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(256, name = "pc-dense-2"))
+        model.add(keras.layers.Dropout(0.5, name = "pc-dropout-2"))
+
+        model.add(keras.layers.Dense(12, activation = "softmax", name = "pc-predictions"))
+
+        # # Make Base Model
+        # base_model = InceptionV3(weights = 'imagenet', input_shape = (crop_height, crop_width, 3), include_top = False, name = "pc-inception")
+        # # Freeze base_model
+        # base_model.trainable = True
+        # inputs = keras.Input(shape = (crop_height, crop_width, 3))
+
+        # # Calculate Outputs
+        # x = base_model(inputs, training = True)
+        # x = keras.layers.GlobalAveragePooling2D(name = "pc-pooling")(base_model.output)
+        # x = keras.layers.Flatten()(x)
+        # x = keras.layers.Dense(1024, name = "pc-dense")(x)
+        # x = keras.layers.Dense(256, name = "pc-dense2")(x)
+        # output = keras.layers.Dense(12, activation = "softmax", name = "pc-predictions")(x)
+
+        # # Make Model
+        # model = keras.Model(inputs = inputs, outputs = output)
 
         # Compile, Train, And Save Model
         model.compile(optimizer = keras.optimizers.Adam(learning_rate),
@@ -231,5 +352,5 @@ if __name__ == "__main__":
         
         num_epochs = 6
         model.fit(train_piece_images, train_piece_labels,
-                  validation_set = (valid_piece_images, valid_piece_labels), epochs = num_epochs)
+                  validation_data = (valid_piece_images, valid_piece_labels), epochs = num_epochs, batch_size = batch_size)
         model.save("piece_classifier.keras", overwrite = True)
