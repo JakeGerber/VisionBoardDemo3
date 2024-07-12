@@ -105,7 +105,7 @@ def board_localization(image, piece_data, corners, white_view, inner_grid, cw, c
             else: label = 0 # Empty tile
 
             # Convert labels to one-hot encodings
-            if (label != 0):
+            if (label != 0 and gather_piece_data):
                 one_hot = np.zeros(12)
                 one_hot[label - 1] = 1
                 piece_labels.append(one_hot)
@@ -144,7 +144,7 @@ def board_localization(image, piece_data, corners, white_view, inner_grid, cw, c
             crop = cv.resize(warped[Y0:Y1, min(X0,X1):max(X0,X1)], (cw, ch))
             if (flip): crop = cv.flip(crop, 1)
             if (not gather_piece_data): images.append(crop)
-            if (label == 0 and gather_piece_data): piece_images.append(crop)
+            if (label != 0 and gather_piece_data): piece_images.append(crop)
     
     # Free memory
     del tiles, warped
@@ -172,19 +172,18 @@ if __name__ == "__main__":
     # SET THIS IF YOU WANT TO TRAIN OR TEST THE MODEL #
     #=================================================#
     train = False # Choose whether to train or test.
-    use_oc = True # Training/testing occupancy classifier = true, otherwise train/test piece classifier
+    use_oc = False # Training/testing occupancy classifier = true, otherwise train/test piece classifier
     
     if (train):
         #=================#
         # DATA COLLECTION #
         #=================#
-        
         start_time = time.time()
 
         # Gather and read the training and validation datasets.
         
         # For small tests of the AI, let's not load the whole dataset.
-        use_up_to = 500  # Set as None if you want to use the whole thing.
+        use_up_to = 1000  # Set as None if you want to use the whole thing.
 
         train_files = listdir("Data/train")
         train_images, train_piece_images, train_piece_labels, train_empty_labels = [], [], [], []
@@ -352,7 +351,7 @@ if __name__ == "__main__":
                       loss = keras.losses.CategoricalCrossentropy(),
                       metrics = ['accuracy'])
         
-        num_epochs = 6
+        num_epochs = 50
         model.fit(train_piece_images, train_piece_labels,
                   validation_data = (valid_piece_images, valid_piece_labels), epochs = num_epochs, batch_size = batch_size)
         model.save("piece_classifier.keras", overwrite = True)
@@ -362,7 +361,7 @@ if __name__ == "__main__":
         start_time = time.time()
 
         # For small tests of the AI, let's not load the whole dataset.
-        use_up_to = 500  # Set as None if you want to use the whole thing.
+        use_up_to = 1000  # Set as None if you want to use the whole thing.
         
         test_files = listdir("Data/test")
         
@@ -386,23 +385,49 @@ if __name__ == "__main__":
     # Test occupancy classifier
     if (not train and use_oc):
         model = keras.models.load_model("occupancy_classifier.keras")
-        #model.evaluate(test_images, test_empty_labels)
+        model.evaluate(np.asarray(test_images), np.asarray(test_empty_labels))
         
         # Choose images from the dataset randomly and predict.
         print("Randomly choosing test images to display.")
         score = 0
         test_amount = 20
-        threshold = 0.75
+        threshold = 0.8
+        str_labels = ["Empty", "Not Empty"]
         for _ in range(test_amount):
             i = np.random.randint(0, len(test_images))
             cv.imshow("Test Image", np.asarray(test_images[i]))
             img = np.expand_dims(test_images[i], 0)
             pred = np.reshape(model(img), -1)
-            print(pred)
+            print("Probability Distribution: " + str(pred))
             if (max(pred) >= threshold): label = np.argmax(pred)
             else: label = np.random.choice(2, 1, p = pred)[0]
             actual = np.argmax(test_empty_labels[i])
-            print("Predicted: %d, Actual: %d" % (label, actual))
+            print("Predicted: " + str_labels[label] + ", Actual: " + str_labels[actual])
+            if (label == actual): score += 1
+            cv.waitKey()
+        print("Testing had a score of %d/%d or %.3f accuracy!" % (score, test_amount, score/test_amount))
+        
+    # Test piece classifier
+    if (not train and not use_oc):
+        model = keras.models.load_model("piece_classifier.keras")
+        model.evaluate(np.asarray(test_piece_images, np.float32), np.asarray(test_piece_labels, np.float32))
+        
+        # Choose images from the dataset randomly and predict.
+        print("Randomly choosing test images to display.")
+        score = 0
+        test_amount = 20
+        threshold = 0.8
+        str_labels = "PRNBQKprnbqk"
+        for _ in range(test_amount):
+            i = np.random.randint(0, len(test_piece_images))
+            cv.imshow("Test Image", np.asarray(test_piece_images[i]))
+            img = np.expand_dims(test_piece_images[i], 0)
+            pred = np.reshape(model(img), -1)
+            print("Probability Distribution: " + str(pred))
+            if (max(pred) >= threshold): label = np.argmax(pred)
+            else: label = np.random.choice(12, 1, p = pred)[0]
+            actual = np.argmax(test_piece_labels[i])
+            print("Predicted: " + str_labels[label] + ", Actual: " + str_labels[actual])
             if (label == actual): score += 1
             cv.waitKey()
         print("Testing had a score of %d/%d or %.3f accuracy!" % (score, test_amount, score/test_amount))
