@@ -159,9 +159,9 @@ if __name__ == "__main__":
     crop_width, crop_height = 100, 100
     
     # Helper function for collecting the data we need for cropping the images
-    def gather_data(imname, cw, ch, gather_piece_data):
-        im = cv.imread("Data/train/" + imname + ".png")
-        metadata = json.load(open("Data/train/" + imname + ".json"))
+    def gather_data(imname, filename, cw, ch, gather_piece_data):
+        im = cv.imread(filename + imname + ".png")
+        metadata = json.load(open(filename + imname + ".json"))
         pieces = [(p['piece'], p['square'], p['box']) for p in metadata['pieces']]
         corners = metadata['corners']
         white_view = metadata['white_turn']
@@ -171,14 +171,16 @@ if __name__ == "__main__":
     #=================================================#
     # SET THIS IF YOU WANT TO TRAIN OR TEST THE MODEL #
     #=================================================#
-    train = True
-    train_oc = True # Training occupancy classifier = true, otherwise train piece classifier
+    train = False # Choose whether to train or test.
+    use_oc = True # Training/testing occupancy classifier = true, otherwise train/test piece classifier
     
     if (train):
         #=================#
         # DATA COLLECTION #
         #=================#
+        
         start_time = time.time()
+
         # Gather and read the training and validation datasets.
         
         # For small tests of the AI, let's not load the whole dataset.
@@ -193,8 +195,8 @@ if __name__ == "__main__":
             x = imname.split('.')
             if (x[1] == "json"): continue
             x = x[0]
-            images, piece_images, one_hot_labels, empty_labels = gather_data(x, crop_width, crop_height, not train_oc)
-            if (train_oc):
+            images, piece_images, one_hot_labels, empty_labels = gather_data(x, "Data/train/", crop_width, crop_height, not use_oc)
+            if (use_oc):
                 train_images += images
                 train_empty_labels += empty_labels
             else:
@@ -205,7 +207,7 @@ if __name__ == "__main__":
         train_piece_labels = np.asarray(train_piece_labels, dtype = np.float32)
         train_empty_labels = np.asarray(train_empty_labels, dtype = np.float32)
         
-        valid_files = listdir("Data/train")
+        valid_files = listdir("Data/val")
         valid_images, valid_piece_images, valid_piece_labels, valid_empty_labels = [], [], [], []
         
         # Validation dataset
@@ -214,8 +216,8 @@ if __name__ == "__main__":
             x = imname.split('.')
             if (x[1] == "json"): continue
             x = x[0]
-            images, piece_images, one_hot_labels, empty_labels = gather_data(x, crop_width, crop_height, not train_oc)
-            if (train_oc):
+            images, piece_images, one_hot_labels, empty_labels = gather_data(x, "Data/val/", crop_width, crop_height, not use_oc)
+            if (use_oc):
                 valid_images += images
                 valid_empty_labels += empty_labels
             else:
@@ -235,7 +237,7 @@ if __name__ == "__main__":
     # Occupancy Classification (Resnet 101) #
     #=======================================#
 
-    if (train and train_oc):
+    if (train and use_oc):
         # Model parameters
         batch_size = 128
         learning_rate = 1e-4
@@ -297,7 +299,7 @@ if __name__ == "__main__":
     # Piece Classification (Resnet 101) #
     #===================================#
 
-    if (train and not train_oc):  
+    if (train and not use_oc):  
         # Model parameters
         batch_size = 128
         learning_rate = 1e-4
@@ -354,3 +356,53 @@ if __name__ == "__main__":
         model.fit(train_piece_images, train_piece_labels,
                   validation_data = (valid_piece_images, valid_piece_labels), epochs = num_epochs, batch_size = batch_size)
         model.save("piece_classifier.keras", overwrite = True)
+        
+    # Testing
+    if (not train):
+        start_time = time.time()
+
+        # For small tests of the AI, let's not load the whole dataset.
+        use_up_to = 500  # Set as None if you want to use the whole thing.
+        
+        test_files = listdir("Data/test")
+        
+        # Testing dataset
+        print("Loading testing dataset...")
+        test_images, test_empty_labels, test_piece_images, test_piece_labels = [], [], [], []
+        for imname in (test_files[:use_up_to] if use_up_to != None else test_files):
+            x = imname.split('.')
+            if (x[1] == "json"): continue
+            x = x[0]
+            images, piece_images, one_hot_labels, empty_labels = gather_data(x, "Data/test/", crop_width, crop_height, not use_oc)
+            if (use_oc):
+                test_images += images
+                test_empty_labels += empty_labels
+            else:
+                test_piece_images += piece_images
+                test_piece_labels += one_hot_labels
+        
+        print("Datasets loaded in %.3f seconds." % (time.time() - start_time))
+    
+    # Test occupancy classifier
+    if (not train and use_oc):
+        model = keras.models.load_model("occupancy_classifier.keras")
+        #model.evaluate(test_images, test_empty_labels)
+        
+        # Choose images from the dataset randomly and predict.
+        print("Randomly choosing test images to display.")
+        score = 0
+        test_amount = 20
+        threshold = 0.75
+        for _ in range(test_amount):
+            i = np.random.randint(0, len(test_images))
+            cv.imshow("Test Image", np.asarray(test_images[i]))
+            img = np.expand_dims(test_images[i], 0)
+            pred = np.reshape(model(img), -1)
+            print(pred)
+            if (max(pred) >= threshold): label = np.argmax(pred)
+            else: label = np.random.choice(2, 1, p = pred)[0]
+            actual = np.argmax(test_empty_labels[i])
+            print("Predicted: %d, Actual: %d" % (label, actual))
+            if (label == actual): score += 1
+            cv.waitKey()
+        print("Testing had a score of %d/%d or %.3f accuracy!" % (score, test_amount, score/test_amount))
