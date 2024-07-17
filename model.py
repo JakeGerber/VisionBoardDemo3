@@ -7,12 +7,52 @@ import numpy as np
 import cv2 as cv
 
 import keras
-from keras._tf_keras.keras.applications.inception_v3 import InceptionV3
-from keras._tf_keras.keras.applications.resnet import ResNet101
+# from keras._tf_keras.keras.applications.inception_v3 import InceptionV3
+# from keras._tf_keras.keras.applications.resnet import ResNet101
+
+
+#====================#
+# BOARD LOCALIZATION #
+#====================#
 
 # Given an image of a chessboard and its metadata, split it into a collection of 64 tiles
 # labeled by the pieces (or lack thereof) which occupy that tile.
 # Returns a 64 element array of tile images and their labels.
+
+#==================#
+# INPUT PARAMETERS #
+#==================#
+
+# image = The input chessboard image you want to break up.
+
+# piece_data = An array of tuples of the form (piece name, square location) where piece name and square location
+#              are specified in algebraic notation. For instance, a black knight at d3 is represented as the tuple ("n", "d3").
+#              Pieces may be specified in any order. Set this as an empty array if you don't want labels (such as using the AI in practice).
+
+# corners = An array of the corners of the chessboard as (x, y) points on the image. Corners may be specified in any order.
+
+# white_view = True if the image of the board is from white's perspective. False if from black's perspective.
+
+# inner_grid = True if "corners" is the set of corners of the 6x6 inner chessboard, False if "corners" is the set of corners
+#              of the entire 8x8 chessboard.
+
+# cw, ch = Width and height respectively for each output cropped image.
+
+# gather_piece_data = True if you want ONLY the piece images & labels, False if you want everything with labels occupied/not occupied.
+#                     True to gather data for the piece classifer, False otherwise.
+
+#=========#
+# OUTPUTS #
+#=========#
+
+# images = The set of ALL 64 cropped tiles (in the order top-left to bottom-right)
+
+# piece_images = The set of ONLY the tiles with pieces in them (in the order top-left to bottom-right)
+
+# piece_labels = The set of labels (one-hot encoding) for the piece images (in the order top-left to bottom-right)
+
+# empty_labels = The set of empty/occupied labels (one-hot encoding) for all images (in the order top-left to bottom-right)
+
 def board_localization(image, piece_data, corners, white_view, inner_grid, cw, ch, gather_piece_data):
     # Identify the corners of the image (since corners are not necessarily specified in order of TL -> BR).
     # Do this by choosing the point with the minimum distance to each corner of the image.
@@ -232,9 +272,9 @@ if __name__ == "__main__":
         # NOTE: ResNet and Inception were having problems so I'm using a simple CNN as a classifier for now just to see if I can get things
         # working.
 
-    #=======================================#
-    # Occupancy Classification (Resnet 101) #
-    #=======================================#
+    #==========================#
+    # Occupancy Classification #
+    #==========================#
 
     if (train and use_oc):
         # Model parameters
@@ -294,9 +334,9 @@ if __name__ == "__main__":
                   validation_data = (valid_images, valid_empty_labels), epochs = num_epochs, batch_size = batch_size)
         model.save("occupancy_classifier.keras", overwrite = True)
             
-    #===================================#
-    # Piece Classification (Resnet 101) #
-    #===================================#
+    #======================#
+    # Piece Classification #
+    #======================#
 
     if (train and not use_oc):  
         # Model parameters
@@ -396,11 +436,21 @@ if __name__ == "__main__":
         for _ in range(test_amount):
             i = np.random.randint(0, len(test_images))
             cv.imshow("Test Image", np.asarray(test_images[i]))
+            
+            # Input img ---> img shape (100,100,3)
+            # img = np.expand_dims(img, 0) ---> img shape now (1,100,100,3)
+            # pred = model(img) ---> pred shape (1, 2)
+            # pred = np.reshape(pred, -1) ---> pred shape now (2)
+            # pred[0] = probability of 0th class, pred[1] = probability of 1st class
+            # 0 class = empty, 1 class = occupied
             img = np.expand_dims(test_images[i], 0)
             pred = np.reshape(model(img), -1)
             print("Probability Distribution: " + str(pred))
+            
+            # Choose randomly or highest value.
             if (max(pred) >= threshold): label = np.argmax(pred)
             else: label = np.random.choice(2, 1, p = pred)[0]
+            
             actual = np.argmax(test_empty_labels[i])
             print("Predicted: " + str_labels[label] + ", Actual: " + str_labels[actual])
             if (label == actual): score += 1
@@ -419,13 +469,24 @@ if __name__ == "__main__":
         threshold = 0.8
         str_labels = "PRNBQKprnbqk"
         for _ in range(test_amount):
+            # Choose image randomly
             i = np.random.randint(0, len(test_piece_images))
             cv.imshow("Test Image", np.asarray(test_piece_images[i]))
+            
+            # Input img ---> img shape (100,100,3)
+            # img = np.expand_dims(img, 0) ---> img shape now (1,100,100,3)
+            # pred = model(img) ---> pred shape (1, 12)
+            # pred = np.reshape(pred, -1) ---> pred shape now (12)
+            # pred[i] = probability of ith class
+            # Classes are in order "PRNBQKprnbqk"
             img = np.expand_dims(test_piece_images[i], 0)
             pred = np.reshape(model(img), -1)
             print("Probability Distribution: " + str(pred))
+
+            # Choose randomly or highest value.
             if (max(pred) >= threshold): label = np.argmax(pred)
             else: label = np.random.choice(12, 1, p = pred)[0]
+
             actual = np.argmax(test_piece_labels[i])
             print("Predicted: " + str_labels[label] + ", Actual: " + str_labels[actual])
             if (label == actual): score += 1
