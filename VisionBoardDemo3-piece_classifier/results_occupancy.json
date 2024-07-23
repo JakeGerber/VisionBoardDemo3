@@ -1,0 +1,332 @@
+[
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 3,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 486,
+        "test_amount": 500,
+        "accuracy": "0.972",
+        "train_result": "Testing had a score of 486/500 or 0.972 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 4,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 486,
+        "test_amount": 500,
+        "accuracy": "0.972",
+        "train_result": "Testing had a score of 486/500 or 0.972 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 5,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 489,
+        "test_amount": 500,
+        "accuracy": "0.978",
+        "train_result": "Testing had a score of 489/500 or 0.978 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 6,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 481,
+        "test_amount": 500,
+        "accuracy": "0.962",
+        "train_result": "Testing had a score of 481/500 or 0.962 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 7,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 472,
+        "test_amount": 500,
+        "accuracy": "0.944",
+        "train_result": "Testing had a score of 472/500 or 0.944 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 8,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 480,
+        "test_amount": 500,
+        "accuracy": "0.960",
+        "train_result": "Testing had a score of 480/500 or 0.960 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 9,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 450,
+        "test_amount": 500,
+        "accuracy": "0.900",
+        "train_result": "Testing had a score of 450/500 or 0.900 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 10,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 477,
+        "test_amount": 500,
+        "accuracy": "0.954",
+        "train_result": "Testing had a score of 477/500 or 0.954 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 11,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 485,
+        "test_amount": 500,
+        "accuracy": "0.970",
+        "train_result": "Testing had a score of 485/500 or 0.970 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 12,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 474,
+        "test_amount": 500,
+        "accuracy": "0.948",
+        "train_result": "Testing had a score of 474/500 or 0.948 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 3,
+        "num_epochs_occupancy": 13,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 492,
+        "test_amount": 500,
+        "accuracy": "0.984",
+        "train_result": "Testing had a score of 492/500 or 0.984 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 3,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 475,
+        "test_amount": 500,
+        "accuracy": "0.950",
+        "train_result": "Testing had a score of 475/500 or 0.950 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 4,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 475,
+        "test_amount": 500,
+        "accuracy": "0.950",
+        "train_result": "Testing had a score of 475/500 or 0.950 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 5,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 471,
+        "test_amount": 500,
+        "accuracy": "0.942",
+        "train_result": "Testing had a score of 471/500 or 0.942 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 6,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 478,
+        "test_amount": 500,
+        "accuracy": "0.956",
+        "train_result": "Testing had a score of 478/500 or 0.956 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 7,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 476,
+        "test_amount": 500,
+        "accuracy": "0.952",
+        "train_result": "Testing had a score of 476/500 or 0.952 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 8,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 492,
+        "test_amount": 500,
+        "accuracy": "0.984",
+        "train_result": "Testing had a score of 492/500 or 0.984 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 9,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 488,
+        "test_amount": 500,
+        "accuracy": "0.976",
+        "train_result": "Testing had a score of 488/500 or 0.976 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 10,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 485,
+        "test_amount": 500,
+        "accuracy": "0.970",
+        "train_result": "Testing had a score of 485/500 or 0.970 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 11,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 495,
+        "test_amount": 500,
+        "accuracy": "0.990",
+        "train_result": "Testing had a score of 495/500 or 0.990 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 12,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 487,
+        "test_amount": 500,
+        "accuracy": "0.974",
+        "train_result": "Testing had a score of 487/500 or 0.974 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 4,
+        "num_epochs_occupancy": 13,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 492,
+        "test_amount": 500,
+        "accuracy": "0.984",
+        "train_result": "Testing had a score of 492/500 or 0.984 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 3,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 485,
+        "test_amount": 500,
+        "accuracy": "0.970",
+        "train_result": "Testing had a score of 485/500 or 0.970 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 4,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 482,
+        "test_amount": 500,
+        "accuracy": "0.964",
+        "train_result": "Testing had a score of 482/500 or 0.964 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 5,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 471,
+        "test_amount": 500,
+        "accuracy": "0.942",
+        "train_result": "Testing had a score of 471/500 or 0.942 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 6,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 460,
+        "test_amount": 500,
+        "accuracy": "0.920",
+        "train_result": "Testing had a score of 460/500 or 0.920 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 7,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 476,
+        "test_amount": 500,
+        "accuracy": "0.952",
+        "train_result": "Testing had a score of 476/500 or 0.952 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 8,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 490,
+        "test_amount": 500,
+        "accuracy": "0.980",
+        "train_result": "Testing had a score of 490/500 or 0.980 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 9,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 487,
+        "test_amount": 500,
+        "accuracy": "0.974",
+        "train_result": "Testing had a score of 487/500 or 0.974 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 10,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 472,
+        "test_amount": 500,
+        "accuracy": "0.944",
+        "train_result": "Testing had a score of 472/500 or 0.944 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 11,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 485,
+        "test_amount": 500,
+        "accuracy": "0.970",
+        "train_result": "Testing had a score of 485/500 or 0.970 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 12,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 490,
+        "test_amount": 500,
+        "accuracy": "0.980",
+        "train_result": "Testing had a score of 490/500 or 0.980 accuracy!"
+    },
+    {
+        "occupancy_layer_amount": 5,
+        "num_epochs_occupancy": 13,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 484,
+        "test_amount": 500,
+        "accuracy": "0.968",
+        "train_result": "Testing had a score of 484/500 or 0.968 accuracy!"
+    }
+]
