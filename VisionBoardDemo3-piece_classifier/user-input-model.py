@@ -563,6 +563,49 @@ if __name__ == "__main__":
 
 
 
+    use_oc = False
+    index = 1
+    for x in range(3, 7): #First param inclusive, second exclusive - Range of layers for this param
+        for y in range(40, 71, 2): # Range of epochs
+
+            print(f"Performing Version: {index}/{64}")
+
+            #current_data = {}
+            piece_layer_amount = x
+            num_epochs_piece = y
+
+            train = True
+            train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount)
+
+            train = False
+            train_result = train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount)
+
+            final_train_result = "Testing had a score of %d/%d or %.3f accuracy!" % (train_result[0], train_result[1], train_result[2])
+
+            
+
+            current_data = {
+                "piece_layer_amount" : piece_layer_amount,
+                "num_epochs_piece" : num_epochs_piece,
+                "starting_filter_amount" : 16,
+                "dropout_param" : 0.5,
+                "score" : train_result[0],
+                "test_amount" : train_result[1],
+                "accuracy" : "%.3f" % (train_result[0]/train_result[1]),
+                "train_result" : final_train_result
+            }
+
+            piece_data.append(current_data)
+
+            with open(path_piece, 'w') as json_file:
+                json.dump(piece_data, json_file, indent=4)
+
+            
+
+            index += 1
+
+
+
 
     use_oc = True
     index = 1
@@ -602,49 +645,6 @@ if __name__ == "__main__":
 
             with open(path_occupancy, 'w') as json_file:
                 json.dump(occupancy_data, json_file, indent=4)
-
-            
-
-            index += 1
-
-
-
-    use_oc = False
-    index = 1
-    for x in range(3, 7): #First param inclusive, second exclusive - Range of layers for this param
-        for y in range(40, 71, 2): # Range of epochs
-
-            print(f"Performing Version: {index}/{64}")
-
-            #current_data = {}
-            piece_layer_amount = x
-            num_epochs_piece = y
-
-            train = True
-            train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount)
-
-            train = False
-            train_result = train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount)
-
-            final_train_result = "Testing had a score of %d/%d or %.3f accuracy!" % (train_result[0], train_result[1], train_result[2])
-
-            
-
-            current_data = {
-                "piece_layer_amount" : piece_layer_amount,
-                "num_epochs_piece" : num_epochs_piece,
-                "starting_filter_amount" : 16,
-                "dropout_param" : 0.5,
-                "score" : train_result[0],
-                "test_amount" : train_result[1],
-                "accuracy" : "%.3f" % (train_result[0]/train_result[1]),
-                "train_result" : final_train_result
-            }
-
-            piece_data.append(current_data)
-
-            with open(path_piece, 'w') as json_file:
-                json.dump(piece_data, json_file, indent=4)
 
             
 

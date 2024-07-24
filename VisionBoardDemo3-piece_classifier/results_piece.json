@@ -1,0 +1,482 @@
+[
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 40,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 367,
+        "test_amount": 500,
+        "accuracy": "0.734",
+        "train_result": "Testing had a score of 367/500 or 0.734 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 42,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 361,
+        "test_amount": 500,
+        "accuracy": "0.722",
+        "train_result": "Testing had a score of 361/500 or 0.722 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 44,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 372,
+        "test_amount": 500,
+        "accuracy": "0.744",
+        "train_result": "Testing had a score of 372/500 or 0.744 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 46,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 368,
+        "test_amount": 500,
+        "accuracy": "0.736",
+        "train_result": "Testing had a score of 368/500 or 0.736 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 48,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 360,
+        "test_amount": 500,
+        "accuracy": "0.720",
+        "train_result": "Testing had a score of 360/500 or 0.720 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 50,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 407,
+        "test_amount": 500,
+        "accuracy": "0.814",
+        "train_result": "Testing had a score of 407/500 or 0.814 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 52,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 412,
+        "test_amount": 500,
+        "accuracy": "0.824",
+        "train_result": "Testing had a score of 412/500 or 0.824 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 54,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 379,
+        "test_amount": 500,
+        "accuracy": "0.758",
+        "train_result": "Testing had a score of 379/500 or 0.758 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 56,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 397,
+        "test_amount": 500,
+        "accuracy": "0.794",
+        "train_result": "Testing had a score of 397/500 or 0.794 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 58,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 382,
+        "test_amount": 500,
+        "accuracy": "0.764",
+        "train_result": "Testing had a score of 382/500 or 0.764 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 60,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 394,
+        "test_amount": 500,
+        "accuracy": "0.788",
+        "train_result": "Testing had a score of 394/500 or 0.788 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 62,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 396,
+        "test_amount": 500,
+        "accuracy": "0.792",
+        "train_result": "Testing had a score of 396/500 or 0.792 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 64,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 400,
+        "test_amount": 500,
+        "accuracy": "0.800",
+        "train_result": "Testing had a score of 400/500 or 0.800 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 66,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 401,
+        "test_amount": 500,
+        "accuracy": "0.802",
+        "train_result": "Testing had a score of 401/500 or 0.802 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 68,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 393,
+        "test_amount": 500,
+        "accuracy": "0.786",
+        "train_result": "Testing had a score of 393/500 or 0.786 accuracy!"
+    },
+    {
+        "piece_layer_amount": 3,
+        "num_epochs_piece": 70,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 393,
+        "test_amount": 500,
+        "accuracy": "0.786",
+        "train_result": "Testing had a score of 393/500 or 0.786 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 40,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 377,
+        "test_amount": 500,
+        "accuracy": "0.754",
+        "train_result": "Testing had a score of 377/500 or 0.754 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 42,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 379,
+        "test_amount": 500,
+        "accuracy": "0.758",
+        "train_result": "Testing had a score of 379/500 or 0.758 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 44,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 406,
+        "test_amount": 500,
+        "accuracy": "0.812",
+        "train_result": "Testing had a score of 406/500 or 0.812 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 46,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 388,
+        "test_amount": 500,
+        "accuracy": "0.776",
+        "train_result": "Testing had a score of 388/500 or 0.776 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 48,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 395,
+        "test_amount": 500,
+        "accuracy": "0.790",
+        "train_result": "Testing had a score of 395/500 or 0.790 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 50,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 405,
+        "test_amount": 500,
+        "accuracy": "0.810",
+        "train_result": "Testing had a score of 405/500 or 0.810 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 52,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 398,
+        "test_amount": 500,
+        "accuracy": "0.796",
+        "train_result": "Testing had a score of 398/500 or 0.796 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 54,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 384,
+        "test_amount": 500,
+        "accuracy": "0.768",
+        "train_result": "Testing had a score of 384/500 or 0.768 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 56,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 401,
+        "test_amount": 500,
+        "accuracy": "0.802",
+        "train_result": "Testing had a score of 401/500 or 0.802 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 58,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 405,
+        "test_amount": 500,
+        "accuracy": "0.810",
+        "train_result": "Testing had a score of 405/500 or 0.810 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 60,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 411,
+        "test_amount": 500,
+        "accuracy": "0.822",
+        "train_result": "Testing had a score of 411/500 or 0.822 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 62,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 398,
+        "test_amount": 500,
+        "accuracy": "0.796",
+        "train_result": "Testing had a score of 398/500 or 0.796 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 64,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 381,
+        "test_amount": 500,
+        "accuracy": "0.762",
+        "train_result": "Testing had a score of 381/500 or 0.762 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 66,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 372,
+        "test_amount": 500,
+        "accuracy": "0.744",
+        "train_result": "Testing had a score of 372/500 or 0.744 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 68,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 406,
+        "test_amount": 500,
+        "accuracy": "0.812",
+        "train_result": "Testing had a score of 406/500 or 0.812 accuracy!"
+    },
+    {
+        "piece_layer_amount": 4,
+        "num_epochs_piece": 70,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 385,
+        "test_amount": 500,
+        "accuracy": "0.770",
+        "train_result": "Testing had a score of 385/500 or 0.770 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 40,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 336,
+        "test_amount": 500,
+        "accuracy": "0.672",
+        "train_result": "Testing had a score of 336/500 or 0.672 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 42,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 329,
+        "test_amount": 500,
+        "accuracy": "0.658",
+        "train_result": "Testing had a score of 329/500 or 0.658 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 44,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 326,
+        "test_amount": 500,
+        "accuracy": "0.652",
+        "train_result": "Testing had a score of 326/500 or 0.652 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 46,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 335,
+        "test_amount": 500,
+        "accuracy": "0.670",
+        "train_result": "Testing had a score of 335/500 or 0.670 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 48,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 333,
+        "test_amount": 500,
+        "accuracy": "0.666",
+        "train_result": "Testing had a score of 333/500 or 0.666 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 50,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 365,
+        "test_amount": 500,
+        "accuracy": "0.730",
+        "train_result": "Testing had a score of 365/500 or 0.730 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 52,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 350,
+        "test_amount": 500,
+        "accuracy": "0.700",
+        "train_result": "Testing had a score of 350/500 or 0.700 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 54,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 346,
+        "test_amount": 500,
+        "accuracy": "0.692",
+        "train_result": "Testing had a score of 346/500 or 0.692 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 56,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 358,
+        "test_amount": 500,
+        "accuracy": "0.716",
+        "train_result": "Testing had a score of 358/500 or 0.716 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 58,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 356,
+        "test_amount": 500,
+        "accuracy": "0.712",
+        "train_result": "Testing had a score of 356/500 or 0.712 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 60,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 383,
+        "test_amount": 500,
+        "accuracy": "0.766",
+        "train_result": "Testing had a score of 383/500 or 0.766 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 62,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 261,
+        "test_amount": 500,
+        "accuracy": "0.522",
+        "train_result": "Testing had a score of 261/500 or 0.522 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 64,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 361,
+        "test_amount": 500,
+        "accuracy": "0.722",
+        "train_result": "Testing had a score of 361/500 or 0.722 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 66,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 378,
+        "test_amount": 500,
+        "accuracy": "0.756",
+        "train_result": "Testing had a score of 378/500 or 0.756 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 68,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 388,
+        "test_amount": 500,
+        "accuracy": "0.776",
+        "train_result": "Testing had a score of 388/500 or 0.776 accuracy!"
+    },
+    {
+        "piece_layer_amount": 5,
+        "num_epochs_piece": 70,
+        "starting_filter_amount": 16,
+        "dropout_param": 0.5,
+        "score": 359,
+        "test_amount": 500,
+        "accuracy": "0.718",
+        "train_result": "Testing had a score of 359/500 or 0.718 accuracy!"
+    }
+]
