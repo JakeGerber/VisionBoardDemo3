@@ -10,7 +10,7 @@ while True:
 
     frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    GRID = (9, 9)
+    GRID = (7, 7)
 
     img_captured_corners = None
 
