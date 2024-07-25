@@ -23,6 +23,8 @@ elo = 1350
 occupancy_classifier_model = keras.models.load_model("occupancy_classifier.keras")
 piece_classifier_model = keras.models.load_model("piece_classifier.keras")
 
+current_board_state = []
+
 # Stockfish & board objects
 stockfish = Stockfish(path = "stockfish/stockfish-windows-x86-64-avx2.exe",
                       depth = depth, parameters = {
@@ -78,6 +80,9 @@ while True:
         # If not found, continue to scan for board
         # Note: Do we want to scan for the board every time it is the player's turn, or just once at the beginning 
 
+
+        # Add a space bar to start the scan
+        
         while True: # Change while loop condition later
 
             cam = cv2.VideoCapture(0)
@@ -159,14 +164,89 @@ while True:
         # INPUT: A list of all occupancies, and a list of all tiles with pieces classified
         # GOAL: Input the board data into stockfish and update board game state
 
-        # loop through the results and make a fenstring
+
+
+        # Combining the two arrays into one that states empty or piece type
+
+        new_detected_board_state = []
+        piece_iterator = 0
+
+        for occ in all_occupancies:
+            if occ == 0: # if empty
+                new_detected_board_state.append("0")
+            else: # if not empty
+                new_detected_board_state.append(all_pieces[piece_iterator])
+                piece_iterator += 1
+
+
+
+
+         # loop through the results and make a fenstring
         #   make a new list represnting the fenstring (or maybe string?)
         #   loop through the list of all occupancies
         #   if unoccupied, continue to go until you reach an occupied one, then add a number to the fenstring to represent the length of empty spaces to the list
         #   if occupied, add the letter representing the piece to the list
 
+
+
+        # Turn the two array outputs from the model into a single fenstring
+        fenstring = ""
+        length_of_empty_spaces = 0
+        piece_iterator = 0
+        tile_counter = 0 # or 0?
+
+        for occ in all_occupancies:
+            if occ == 0: # if empty
+                length_of_empty_spaces += 1
+                tile_counter += 1
+            else: # if not empty
+                if length_of_empty_spaces != 0:
+                    fenstring = fenstring + length_of_empty_spaces
+                    length_of_empty_spaces = 0
+                fenstring = fenstring + all_pieces[piece_iterator]
+                piece_iterator += 1
+                tile_counter += 1
+            if tile_counter % 8 == 0 and tile_counter != 64: # && 
+                fenstring = fenstring + "/" # does this accidentally add a dash at the end of the fenstring
+
+
+
+
+
+    
         # then compare this fenstring with the previous fen string??
         # because we need to input the movement, not the board, i need to find out how to calculate the movment 
+
+        index_difference = []
+        for i in range(64):
+            if current_board_state[i] != new_detected_board_state[i]:
+                index_difference.append(i)
+
+        # if more than two differences, rescane (can there be more than movement per turn? can u hop like checkers? i forgor)
+
+        # convert the index of the different tiles into the coordinates and write it in algebraic notation
+        # maybe just hardcode this as a dictionary?
+
+        # gives this movement to the stock fish api
+
+        # board.piece_at() LOOK INTO THIS
+
+
+
+
+
+
+
+
+
+        # idea.... make a new board using piece_at()... then get fenstring using fen()... then compare fenstrings to get difference?
+        # oh nvm piece_at returns what piece is at that tile...
+
+
+        #maybe use set_piece_at(), set_board_fen(), set_piece_map()
+        
+
+
 
 
 
