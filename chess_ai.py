@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import model
 import keras
-
+import pyautogui
 
 
 # I GOTTA COMMENT MY CODE FIRST
@@ -80,186 +80,204 @@ while True:
         # If not found, continue to scan for board
         # Note: Do we want to scan for the board every time it is the player's turn, or just once at the beginning 
 
+        board_scan = False # Continue scanning until successfully scans the board
+        fail_scan_coutner = 0
+        while board_scan == False:
 
         # Add a space bar to start the scan
+            input("press the Enter key to continue: ")
         
-        while True: # Change while loop condition later
+            while True: # Change while loop condition later
 
-            cam = cv2.VideoCapture(0)
-            value, frame = cam.read()
-            fullImage = frame
-            frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            GRID = (7, 7)
+                cam = cv2.VideoCapture(0)
+                value, frame = cam.read()
+                fullImage = frame
+                frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                GRID = (7, 7)
 
-            # Should i just save "corners" or "img_captured_corners"
-            found, corners = cv2.findChessboardCorners(frame2, GRID, None)
-            print("found: ", found, " corners: ", corners)
-            cv2.imshow("Camera View", frame)
+                # Should i just save "corners" or "img_captured_corners"
+                found, corners = cv2.findChessboardCorners(frame2, GRID, None)
+                print("found: ", found, " corners: ", corners)
+                cv2.imshow("Camera View", frame)
 
-            if found:
-                img_captured_corners = cv2.drawChessboardCorners(frame, GRID, corners, found) # Can get rid of this in the final demo if we don't want to show the visualization
-                cv2.imshow("Camera View", img_captured_corners)
-                break
+                if found:
+                    img_captured_corners = cv2.drawChessboardCorners(frame, GRID, corners, found) # Can get rid of this in the final demo if we don't want to show the visualization
+                    cv2.imshow("Camera View", img_captured_corners)
+                    break
 
-            if cv2.waitKey(1) == ord('q'):
-                break
+                if cv2.waitKey(1) == ord('q'):
+                    break
+
+            
+
+            ############## STEP 2) CHESS BOARD LOCALIZATION / CUTTING UP IMAGE INTO 64 IMAGES OF EACH TILE ##################
+            # INPUT: source image and inner grid corners
+            # GOAL: Return a list of images of all 64 tiles
+
+
+            # Question! What is the purpose of gather_piece_data? #does this only work if you were given the metadata?
+            # oh i see, when actually running this images should be the only thing it returns?
+
+            # Should only return 64 cut up images, the others should be empty arrays 
+            images, piece_images, piece_labels, empty_labels = model.board_localization(image= fullImage, corners= img_captured_corners, white_view= True, inner_grid= True, cw= 100, ch= 100, gather_piece_data= False ) # Assumes that it will always be white view
+
+
+
+
+            ############## STEP 3) DETECTING TILE OCCUPANCIES ##################
+            # INPUT: 64 cropped images of each tile
+            # GOAL: Return a list of all tile's occupances, and a list of just the occupied tiles
+
+            str_labels = ["Empty", "Not Empty"]
+            occupied_tiles = []
+            all_occupancies = []
+            for i in images:
+        
+                # Input img ---> img shape (100,100,3)
+                img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
+                pred = occupancy_classifier_model(img) # ---> pred shape (1, 2)
+                pred = np.reshape(pred, -1) # ---> pred shape now (2)
+                # pred[0] = probability of 0th class, pred[1] = probability of 1st class
+                # 0 class = empty, 1 class = occupied
+                label = np.argmax(pred)
+                all_occupancies.append(label)
+                if (label == 1):
+                    occupied_tiles.append(label)
+
+
+
+            ############## STEP 4) DETECTING TILE PIECES ##################
+            # INPUT: The list of images of tiles that are occupied
+            # GOAL: Return a list of all the tile's pieces
+            
+            str_labels = "PRNBQKprnbqk"
+            all_pieces = []
+            for i in occupied_tiles:
+                # Input img ---> img shape (100,100,3)
+                img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
+                pred = piece_classifier_model(img) # ---> pred shape (1, 12)
+                pred = np.reshape(pred, -1) # ---> pred shape now (12)
+                # pred[i] = probability of ith class
+                # Classes are in order "PRNBQKprnbqk"
+                label = np.argmax(pred)
+                all_pieces.append(label)
+
 
         
-
-        ############## STEP 2) CHESS BOARD LOCALIZATION / CUTTING UP IMAGE INTO 64 IMAGES OF EACH TILE ##################
-        # INPUT: source image and inner grid corners
-        # GOAL: Return a list of images of all 64 tiles
-
-
-        # Question! What is the purpose of gather_piece_data? #does this only work if you were given the metadata?
-        # oh i see, when actually running this images should be the only thing it returns?
-
-        # Should only return 64 cut up images, the others should be empty arrays 
-        images, piece_images, piece_labels, empty_labels = model.board_localization(image= fullImage, corners= img_captured_corners, white_view= True, inner_grid= True, cw= 100, ch= 100, gather_piece_data= False ) # Assumes that it will always be white view
+            ############## STEP 5) GVING RESULTS TO STOCKFISH ##################
+            # INPUT: A list of all occupancies, and a list of all tiles with pieces classified
+            # GOAL: Input the board data into stockfish and update board game state
 
 
 
+            # Combining the two arrays into one that states empty or piece type
 
-        ############## STEP 3) DETECTING TILE OCCUPANCIES ##################
-        # INPUT: 64 cropped images of each tile
-        # GOAL: Return a list of all tile's occupances, and a list of just the occupied tiles
+            new_detected_board_state = []
+            piece_iterator = 0
 
-        str_labels = ["Empty", "Not Empty"]
-        occupied_tiles = []
-        all_occupancies = []
-        for i in images:
-      
-            # Input img ---> img shape (100,100,3)
-            img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
-            pred = occupancy_classifier_model(img) # ---> pred shape (1, 2)
-            pred = np.reshape(pred, -1) # ---> pred shape now (2)
-            # pred[0] = probability of 0th class, pred[1] = probability of 1st class
-            # 0 class = empty, 1 class = occupied
-            label = np.argmax(pred)
-            all_occupancies.append(label)
-            if (label == 1):
-                occupied_tiles.append(label)
+            for occ in all_occupancies:
+                if occ == 0: # if empty
+                    new_detected_board_state.append("0")
+                else: # if not empty
+                    new_detected_board_state.append(all_pieces[piece_iterator])
+                    piece_iterator += 1
 
 
-
-        ############## STEP 4) DETECTING TILE PIECES ##################
-        # INPUT: The list of images of tiles that are occupied
-        # GOAL: Return a list of all the tile's pieces
         
-        str_labels = "PRNBQKprnbqk"
-        all_pieces = []
-        for i in occupied_tiles:
-            # Input img ---> img shape (100,100,3)
-            img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
-            pred = piece_classifier_model(img) # ---> pred shape (1, 12)
-            pred = np.reshape(pred, -1) # ---> pred shape now (12)
-            # pred[i] = probability of ith class
-            # Classes are in order "PRNBQKprnbqk"
-            label = np.argmax(pred)
-            all_pieces.append(label)
+            # then compare this fenstring with the previous fen string??
+            # because we need to input the movement, not the board, i need to find out how to calculate the movment 
 
+            index_difference = []
+            for i in range(64):
+                if current_board_state[i] != new_detected_board_state[i]:
+                    index_difference.append(i)
 
-    
-        ############## STEP 5) GVING RESULTS TO STOCKFISH ##################
-        # INPUT: A list of all occupancies, and a list of all tiles with pieces classified
-        # GOAL: Input the board data into stockfish and update board game state
+            # if more than two differences, rescane (can there be more than movement per turn? can u hop like checkers? i forgor)
 
+            # convert the index of the different tiles into the coordinates and write it in algebraic notation
+            # maybe just hardcode this as a dictionary?
 
+            # gives this movement to the stock fish api
 
-        # Combining the two arrays into one that states empty or piece type
+            # board.piece_at() LOOK INTO THIS
 
-        new_detected_board_state = []
-        piece_iterator = 0
+            # Look at the two different tiles and append the black one first
 
-        for occ in all_occupancies:
-            if occ == 0: # if empty
-                new_detected_board_state.append("0")
-            else: # if not empty
-                new_detected_board_state.append(all_pieces[piece_iterator])
-                piece_iterator += 1
+            board_location_dictionary = {1 : "h1", 2: "g1", 3: "f1", 4: "e1", 5: "d1", 6: "c1", 7: "b1", 8:"a1"}
+            player_move = ""
 
+            if index_difference.len() == 2:
+                if new_detected_board_state[index_difference[0]].islower():
+                    player_move.append(board_location_dictionary[index_difference[0]])
+                    player_move.append(board_location_dictionary[index_difference[1]])
+                elif new_detected_board_state[index_difference[1]].islower():
+                    player_move.append(board_location_dictionary[index_difference[1]])
+                    player_move.append(board_location_dictionary[index_difference[0]])
 
 
 
-         # loop through the results and make a fenstring
-        #   make a new list represnting the fenstring (or maybe string?)
-        #   loop through the list of all occupancies
-        #   if unoccupied, continue to go until you reach an occupied one, then add a number to the fenstring to represent the length of empty spaces to the list
-        #   if occupied, add the letter representing the piece to the list
+            #maybe use set_piece_at(), set_board_fen(), set_piece_map()
+            
 
-
-
-        # Turn the two array outputs from the model into a single fenstring
-        fenstring = ""
-        length_of_empty_spaces = 0
-        piece_iterator = 0
-        tile_counter = 0 # or 0?
-
-        for occ in all_occupancies:
-            if occ == 0: # if empty
-                length_of_empty_spaces += 1
-                tile_counter += 1
-            else: # if not empty
-                if length_of_empty_spaces != 0:
-                    fenstring = fenstring + length_of_empty_spaces
-                    length_of_empty_spaces = 0
-                fenstring = fenstring + all_pieces[piece_iterator]
-                piece_iterator += 1
-                tile_counter += 1
-            if tile_counter % 8 == 0 and tile_counter != 64: # && 
-                fenstring = fenstring + "/" # does this accidentally add a dash at the end of the fenstring
+            ############## STEP 6) CORRECTING INCORRECT CHESS BOARD ##################
+            move = input("What is your move (in algebraic notation)? ")
+            if (stockfish.is_move_correct(move)):
+                board_scan = True
+            else:
+                fail_scan_coutner += 1
+            if fail_scan_coutner >= 5:
+                print("Move invalid. Please try again.")
+                fail_scan_coutner = 0
 
 
 
 
-
-    
-        # then compare this fenstring with the previous fen string??
-        # because we need to input the movement, not the board, i need to find out how to calculate the movment 
-
-        index_difference = []
-        for i in range(64):
-            if current_board_state[i] != new_detected_board_state[i]:
-                index_difference.append(i)
-
-        # if more than two differences, rescane (can there be more than movement per turn? can u hop like checkers? i forgor)
-
-        # convert the index of the different tiles into the coordinates and write it in algebraic notation
-        # maybe just hardcode this as a dictionary?
-
-        # gives this movement to the stock fish api
-
-        # board.piece_at() LOOK INTO THIS
-
-
-
-
-
-
-
-
-
-        # idea.... make a new board using piece_at()... then get fenstring using fen()... then compare fenstrings to get difference?
-        # oh nvm piece_at returns what piece is at that tile...
-
-
-        #maybe use set_piece_at(), set_board_fen(), set_piece_map()
         
-
-
-
-
-
-        ############## STEP 6) CORRECTING INCORRECT CHESS BOARD ##################
-
-
-
-        move = input("What is your move (in algebraic notation)? ")
-        if (stockfish.is_move_correct(move)): break
-        print("Move invalid. Please try again.")
-
 
     # Update the board state.
     board.push(chess.Move.from_uci(move))
     current_move = not current_move
     move_number += 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              # # loop through the results and make a fenstring
+            # #   make a new list represnting the fenstring (or maybe string?)
+            # #   loop through the list of all occupancies
+            # #   if unoccupied, continue to go until you reach an occupied one, then add a number to the fenstring to represent the length of empty spaces to the list
+            # #   if occupied, add the letter representing the piece to the list
+
+
+
+            # # Turn the two array outputs from the model into a single fenstring
+            # fenstring = ""
+            # length_of_empty_spaces = 0
+            # piece_iterator = 0
+            # tile_counter = 0 # or 0?
+
+            # for occ in all_occupancies:
+            #     if occ == 0: # if empty
+            #         length_of_empty_spaces += 1
+            #         tile_counter += 1
+            #     else: # if not empty
+            #         if length_of_empty_spaces != 0:
+            #             fenstring = fenstring + length_of_empty_spaces
+            #             length_of_empty_spaces = 0
+            #         fenstring = fenstring + all_pieces[piece_iterator]
+            #         piece_iterator += 1
+            #         tile_counter += 1
+            #     if tile_counter % 8 == 0 and tile_counter != 64: # && 
+            #         fenstring = fenstring + "/" # does this accidentally add a dash at the end of the fenstring
