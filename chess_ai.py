@@ -1,4 +1,5 @@
 from stockfish import Stockfish
+from os import listdir
 import chess
 import numpy as np
 import cv2
@@ -8,6 +9,24 @@ import pyautogui
 
 
 # I GOTTA COMMENT MY CODE FIRST
+
+
+
+
+train_files = listdir()
+print(train_files)
+train_files = listdir("Data/train")
+print(train_files)
+
+use_up_to = 1
+
+for imname in (train_files[:use_up_to] if use_up_to != None else train_files):
+            x = imname.split('.')
+            if (x[1] == "json"): continue
+            x = x[0]
+            im = cv2.imread("Data/train/" + imname.split('.') + ".png")
+
+# imma just test each sectio individually
 
 
 # TODO:
