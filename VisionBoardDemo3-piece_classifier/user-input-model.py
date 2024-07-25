@@ -191,7 +191,7 @@ def board_localization(image, piece_data, corners, white_view, inner_grid, cw, c
 
     return images, piece_images, piece_labels, empty_labels
 
-def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: int = 50, num_epochs_occupancy: int = 3, occupancy_layer_amount: int = 3, piece_layer_amount: int = 3):
+def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: int = 50, num_epochs_occupancy: int = 3, occupancy_layer_amount: int = 3, piece_layer_amount: int = 3, learning_rate = 1e-4, filters = [16, 32, 64], batch_size=128):
 
 
     ###################
@@ -282,8 +282,8 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
 
     if (train and use_oc):
         # Model parameters
-        batch_size = 128
-        learning_rate = 1e-4
+        #batch_size = 128
+        #learning_rate = 1e-4
 
         # Instantiate model
         model = keras.Sequential()
@@ -292,15 +292,14 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
         # Convolutional layers
 
         #occupancy_layer_amount = 3
-        starting_filter_amount = 16
+        filter_index = 0
         #Multipying by 2 for each layer.
 
-        current_filter_amount = starting_filter_amount
         for i in range(1, occupancy_layer_amount):
             print(i)
-            model.add(keras.layers.Conv2D(filters = current_filter_amount, kernel_size = (5, 5), strides = (1, 1), name = f"oc-conv2d-{i}"))
+            model.add(keras.layers.Conv2D(filters = filters[filter_index], kernel_size = (5, 5), strides = (1, 1), name = f"oc-conv2d-{i}"))
             model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = f"oc-maxpool-{i}"))
-            current_filter_amount *= 2
+            filter_index += 1
 
 
         '''
@@ -359,8 +358,8 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
 
     if (train and not use_oc):  
         # Model parameters
-        batch_size = 128
-        learning_rate = 1e-4
+        #batch_size = 128
+        #learning_rate = 1e-4
 
         # Instantiate model
         model = keras.Sequential()
@@ -369,15 +368,14 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
         # Convolutional layers
 
         #piece_layer_amount = 3
-        starting_filter_amount = 16
+        filter_index = 0
         #Multipying by 2 for each layer.
 
-        current_filter_amount = starting_filter_amount
         for i in range(1, piece_layer_amount):
             print(i)
-            model.add(keras.layers.Conv2D(filters = 16, kernel_size = (5, 5), strides = (1, 1), name = f"pc-conv2d-{i}"))
+            model.add(keras.layers.Conv2D(filters = filters[filter_index], kernel_size = (5, 5), strides = (1, 1), name = f"pc-conv2d-{i}"))
             model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = f"pc-maxpool-{i}"))
-            current_filter_amount *= 2
+            filter_index += 1
 
         '''
         model.add(keras.layers.Conv2D(filters = 16, kernel_size = (5, 5), strides = (1, 1), name = "pc-conv2d-1"))
@@ -393,12 +391,17 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
         model.add(keras.layers.Flatten())
 
         model.add(keras.layers.BatchNormalization())
-        model.add(keras.layers.Dense(1024, name = "pc-dense-1"))
+        model.add(keras.layers.Dense(2048, name = "pc-dense-1"))
         model.add(keras.layers.Dropout(0.5, name = "pc-dropout-1"))
 
         model.add(keras.layers.BatchNormalization())
-        model.add(keras.layers.Dense(256, name = "pc-dense-2"))
+        model.add(keras.layers.Dense(1024, name = "pc-dense-2"))
         model.add(keras.layers.Dropout(0.5, name = "pc-dropout-2"))
+
+        model.add(keras.layers.BatchNormalization())
+        model.add(keras.layers.Dense(256, name = "pc-dense-3"))
+        model.add(keras.layers.Dropout(0.5, name = "pc-dropout-3"))
+
 
         model.add(keras.layers.Dense(12, activation = "softmax", name = "pc-predictions"))
 
@@ -560,6 +563,11 @@ if __name__ == "__main__":
     use_oc = True
 
 
+    learning_rate = 1e-4
+
+    filters = [16, 32, 64]
+
+    batch_size = 128
 
 
 
@@ -575,10 +583,10 @@ if __name__ == "__main__":
             num_epochs_piece = y
 
             train = True
-            train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount)
+            train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount, learning_rate=learning_rate, filters=filters)
 
             train = False
-            train_result = train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount)
+            train_result = train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount, learning_rate=learning_rate, filters=filters)
 
             final_train_result = "Testing had a score of %d/%d or %.3f accuracy!" % (train_result[0], train_result[1], train_result[2])
 
@@ -587,8 +595,10 @@ if __name__ == "__main__":
             current_data = {
                 "piece_layer_amount" : piece_layer_amount,
                 "num_epochs_piece" : num_epochs_piece,
-                "starting_filter_amount" : 16,
+                "filters" : filters,
+                "batch_size": batch_size,
                 "dropout_param" : 0.5,
+                "learning_rate" : learning_rate,
                 "score" : train_result[0],
                 "test_amount" : train_result[1],
                 "accuracy" : "%.3f" % (train_result[0]/train_result[1]),
@@ -619,10 +629,10 @@ if __name__ == "__main__":
             num_epochs_occupancy = y
 
             train = True
-            train_and_view(train=train, use_oc=use_oc, num_epochs_occupancy=num_epochs_occupancy, occupancy_layer_amount=occupancy_layer_amount)
+            train_and_view(train=train, use_oc=use_oc, num_epochs_occupancy=num_epochs_occupancy, occupancy_layer_amount=occupancy_layer_amount, learning_rate=learning_rate, filters=filters)
 
             train = False
-            train_result = train_and_view(train=train, use_oc=use_oc, num_epochs_occupancy=num_epochs_occupancy, occupancy_layer_amount=occupancy_layer_amount)
+            train_result = train_and_view(train=train, use_oc=use_oc, num_epochs_occupancy=num_epochs_occupancy, occupancy_layer_amount=occupancy_layer_amount, learning_rate=learning_rate, filters=filters)
 
             #print("Testing had a score of %d/%d or %.3f accuracy!" % (train_result[0], train_result[1], train_result[2]))
 
@@ -633,8 +643,10 @@ if __name__ == "__main__":
             current_data = {
                 "occupancy_layer_amount" : occupancy_layer_amount,
                 "num_epochs_occupancy" : num_epochs_occupancy,
-                "starting_filter_amount" : 16,
+                "filters" : filters,
+                "batch_size" : batch_size,
                 "dropout_param" : 0.5,
+                "learning_rate" : learning_rate,
                 "score" : train_result[0],
                 "test_amount" : train_result[1],
                 "accuracy" : "%.3f" % (train_result[0]/train_result[1]),
