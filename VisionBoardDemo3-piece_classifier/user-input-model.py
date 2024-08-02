@@ -297,7 +297,7 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
 
         for i in range(1, occupancy_layer_amount):
             print(i)
-            model.add(keras.layers.Conv2D(filters = filters[filter_index], kernel_size = (5, 5), strides = (1, 1), name = f"oc-conv2d-{i}"))
+            model.add(keras.layers.Conv2D(filters = filters[filter_index][0], kernel_size = (filters[filter_index][1], filters[filter_index][1]), strides = (1, 1), name = f"oc-conv2d-{i}"))
             model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = f"oc-maxpool-{i}"))
             filter_index += 1
 
@@ -373,7 +373,7 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
 
         for i in range(1, piece_layer_amount):
             print(i)
-            model.add(keras.layers.Conv2D(filters = filters[filter_index], kernel_size = (5, 5), strides = (1, 1), name = f"pc-conv2d-{i}"))
+            model.add(keras.layers.Conv2D(filters = filters[filter_index][0], kernel_size = (filters[filter_index][1], filters[filter_index][1]), strides = (1, 1), name = f"pc-conv2d-{i}"))
             model.add(keras.layers.MaxPool2D(pool_size = (2, 2), strides = (2, 2), name = f"pc-maxpool-{i}"))
             filter_index += 1
 
@@ -552,9 +552,9 @@ if __name__ == "__main__":
     num_epochs_occupancy = 3
 
 
-    piece_layer_amount = 3
+    piece_layer_amount = 4
 
-    occupancy_layer_amount = 3
+    occupancy_layer_amount = 4
 
 
     #Starting with occupancy
@@ -565,7 +565,7 @@ if __name__ == "__main__":
 
     learning_rate = 1e-4
 
-    filters = [16, 32, 64]
+    filters = [(16, 5), (32, 5), (64, 3), (128, 3)]
 
     batch_size = 128
 
@@ -573,14 +573,16 @@ if __name__ == "__main__":
 
     use_oc = False
     index = 1
-    for x in range(3, 7): #First param inclusive, second exclusive - Range of layers for this param
-        for y in range(40, 71, 2): # Range of epochs
+    for x in range(60, 91, 5): #Range of epochs
+        for y in range(2, 7): # Learning Rate
 
             print(f"Performing Version: {index}/{64}")
 
             #current_data = {}
-            piece_layer_amount = x
-            num_epochs_piece = y
+            piece_layer_amount = 3
+            num_epochs_piece = x
+
+            learning_rate = (1 / (10**y))
 
             train = True
             train_and_view(train=train, use_oc=use_oc, num_epochs_piece=num_epochs_piece, piece_layer_amount=piece_layer_amount, learning_rate=learning_rate, filters=filters)
@@ -619,14 +621,17 @@ if __name__ == "__main__":
 
     use_oc = True
     index = 1
-    for x in range(3, 7): #First param inclusive, second exclusive - Range of layers for this param
-        for y in range(3, 14): # Range of epochs
+    for x in range(60, 91, 5): #Range of epochs
+        for y in range(2, 7): # Learning Rate
 
             print(f"Performing Version: {index}/{40}")
 
             #current_data = {}
-            occupancy_layer_amount = x
-            num_epochs_occupancy = y
+            occupancy_layer_amount = 3
+            num_epochs_occupancy = x
+
+
+            learning_rate = (1 / (10**y))
 
             train = True
             train_and_view(train=train, use_oc=use_oc, num_epochs_occupancy=num_epochs_occupancy, occupancy_layer_amount=occupancy_layer_amount, learning_rate=learning_rate, filters=filters)
