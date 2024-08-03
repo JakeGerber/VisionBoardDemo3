@@ -13,18 +13,28 @@ import pyautogui
 
 
 
-train_files = listdir()
+train_files = listdir("/Users/derky/Desktop/VBDemo3/val")
 print(train_files)
-train_files = listdir("Data/train")
-print(train_files)
+#train_files = listdir()
+#print(train_files)
 
-use_up_to = 1
+use_up_to = 2
 
+print("JOE BIDEN 1")
+print(train_files[0])
 for imname in (train_files[:use_up_to] if use_up_to != None else train_files):
             x = imname.split('.')
             if (x[1] == "json"): continue
             x = x[0]
-            im = cv2.imread("Data/train/" + imname.split('.') + ".png")
+            print("JOE BIDEN")
+            print(x)
+            im = cv2.imread("/Users/derky/Desktop/VBDemo3/val/" + x + ".png")
+            print(type(im))
+
+            cv2.imshow("Image", im)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
 
 # imma just test each sectio individually
 
