@@ -437,7 +437,7 @@ def train_and_view(train: bool = True, use_oc: bool = True, num_epochs_piece: in
         start_time = time.time()
 
         # For small tests of the AI, let's not load the whole dataset.
-        use_up_to = 1000  # Set as None if you want to use the whole thing.
+        use_up_to = None  # Set as None if you want to use the whole thing.
         
         test_files = listdir("Data/test")
         
@@ -621,8 +621,8 @@ if __name__ == "__main__":
 
     use_oc = True
     index = 1
-    for x in range(60, 91, 5): #Range of epochs
-        for y in range(2, 7): # Learning Rate
+    for x in range(20, 101, 5): #Range of epochs
+        for y in range(2, 3): # Learning Rate
 
             print(f"Performing Version: {index}/{40}")
 
@@ -631,7 +631,7 @@ if __name__ == "__main__":
             num_epochs_occupancy = x
 
 
-            learning_rate = (1 / (10**y))
+            #learning_rate = (1 / (10**y))
 
             train = True
             train_and_view(train=train, use_oc=use_oc, num_epochs_occupancy=num_epochs_occupancy, occupancy_layer_amount=occupancy_layer_amount, learning_rate=learning_rate, filters=filters)
