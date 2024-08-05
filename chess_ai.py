@@ -53,7 +53,7 @@ elo = 1350
 occupancy_classifier_model = keras.models.load_model("occupancy_classifier.keras")
 piece_classifier_model = keras.models.load_model("piece_classifier.keras")
 
-current_board_state = []
+current_board_state = [0]*64
 
 # Stockfish & board objects
 stockfish = Stockfish(path = "stockfish/stockfish-windows-x86-64-avx2.exe",
@@ -129,13 +129,13 @@ while True:
                 GRID = (7, 7)
 
                 # Should i just save "corners" or "img_captured_corners"
-                found, corners = cv2.findChessboardCorners(frame2, GRID, None)
-                print("found: ", found, " corners: ", corners)
+                found, cornersList = cv2.findChessboardCorners(frame2, GRID, None)
+                print("found: ", found, " corners: ", cornersList)
                 cv2.imshow("Camera View", frame)
                 print("joe biden 3")
 
                 if found:
-                    img_captured_corners = cv2.drawChessboardCorners(frame, GRID, corners, found) # Can get rid of this in the final demo if we don't want to show the visualization
+                    img_captured_corners = cv2.drawChessboardCorners(frame, GRID, cornersList, found) # Can get rid of this in the final demo if we don't want to show the visualization
                     cv2.imshow("Camera View", img_captured_corners)
                     print("FOUND CORNERS")
                     break
@@ -154,8 +154,28 @@ while True:
             # Question! What is the purpose of gather_piece_data? #does this only work if you were given the metadata?
             # oh i see, when actually running this images should be the only thing it returns?
 
+
             # Should only return 64 cut up images, the others should be empty arrays 
-            images, piece_images, piece_labels, empty_labels = model.board_localization(image= fullImage, corners= img_captured_corners, white_view= True, inner_grid= True, cw= 100, ch= 100, gather_piece_data= False ) # Assumes that it will always be white view
+
+            print(cornersList[0])
+            print(cornersList[0])
+            print("-----------------------")
+            print(cornersList[0][0])
+            print(len(cornersList[0][0]))
+
+            formattedCornersList = []
+            for i in cornersList:
+                print(i)
+                print("boob")
+                formattedCornersList.append([i[0][0], i[0][1]])
+                print(i[0])
+                print("gay")
+                print(i[0][0])
+            print(formattedCornersList)
+
+            images, piece_images, piece_labels, empty_labels = model.board_localization(image= fullImage, piece_data=[], corners= formattedCornersList
+                                                                                        , white_view= True, inner_grid= True, cw= 100, ch= 100,
+                                                                                          gather_piece_data= False ) # Assumes that it will always be white view
 
 
 
@@ -167,7 +187,7 @@ while True:
             str_labels = ["Empty", "Not Empty"]
             occupied_tiles = []
             all_occupancies = []
-            for i in images:
+            for img in images:
         
                 # Input img ---> img shape (100,100,3)
                 img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
@@ -180,6 +200,11 @@ while True:
                 if (label == 1):
                     occupied_tiles.append(label)
 
+                print("all occupancies")
+                print(all_occupancies)
+                print("occupied tiles")
+                print(occupied_tiles)
+
 
 
             ############## STEP 4) DETECTING TILE PIECES ##################
@@ -188,15 +213,20 @@ while True:
             
             str_labels = "PRNBQKprnbqk"
             all_pieces = []
-            for i in occupied_tiles:
-                # Input img ---> img shape (100,100,3)
-                img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
-                pred = piece_classifier_model(img) # ---> pred shape (1, 12)
-                pred = np.reshape(pred, -1) # ---> pred shape now (12)
-                # pred[i] = probability of ith class
-                # Classes are in order "PRNBQKprnbqk"
-                label = np.argmax(pred)
-                all_pieces.append(label)
+            for i in range(64):
+                if all_occupancies[i] == 1:
+
+                    # Input img ---> img shape (100,100,3)
+                    img = np.expand_dims(images[i], 0) # ---> img shape now (1,100,100,3)
+                    pred = piece_classifier_model(img) # ---> pred shape (1, 12)
+                    pred = np.reshape(pred, -1) # ---> pred shape now (12)
+                    # pred[i] = probability of ith class
+                    # Classes are in order "PRNBQKprnbqk"
+                    label = np.argmax(pred)
+                    all_pieces.append(label)
+            
+            print("all pieces")
+            print(all_pieces)
 
 
         
@@ -217,6 +247,9 @@ while True:
                 else: # if not empty
                     new_detected_board_state.append(all_pieces[piece_iterator])
                     piece_iterator += 1
+                
+            print("new detected board state")
+            print(new_detected_board_state)
 
 
         
@@ -239,10 +272,20 @@ while True:
 
             # Look at the two different tiles and append the black one first
 
-            board_location_dictionary = {1 : "h1", 2: "g1", 3: "f1", 4: "e1", 5: "d1", 6: "c1", 7: "b1", 8:"a1"}
+            # board_location_dictionary = {1 : "h1", 2: "g1", 3: "f1", 4: "e1", 5: "d1", 6: "c1", 7: "b1", 8:"a1"}
+            board_location_dictionary = {
+                    1: "a1", 2: "b1", 3: "c1", 4: "d1", 5: "e1", 6: "f1", 7: "g1", 8: "h1",
+                    9: "a2", 10: "b2", 11: "c2", 12: "d2", 13: "e2", 14: "f2", 15: "g2", 16: "h2",
+                    17: "a3", 18: "b3", 19: "c3", 20: "d3", 21: "e3", 22: "f3", 23: "g3", 24: "h3",
+                    25: "a4", 26: "b4", 27: "c4", 28: "d4", 29: "e4", 30: "f4", 31: "g4", 32: "h4",
+                    33: "a5", 34: "b5", 35: "c5", 36: "d5", 37: "e5", 38: "f5", 39: "g5", 40: "h5",
+                    41: "a6", 42: "b6", 43: "c6", 44: "d6", 45: "e6", 46: "f6", 47: "g6", 48: "h6",
+                    49: "a7", 50: "b7", 51: "c7", 52: "d7", 53: "e7", 54: "f7", 55: "g7", 56: "h7",
+                    57: "a8", 58: "b8", 59: "c8", 60: "d8", 61: "e8", 62: "f8", 63: "g8", 64: "h8"}
+
             player_move = ""
 
-            if index_difference.len() == 2:
+            if len(index_difference) == 2:
                 if new_detected_board_state[index_difference[0]].islower():
                     player_move.append(board_location_dictionary[index_difference[0]])
                     player_move.append(board_location_dictionary[index_difference[1]])
@@ -256,8 +299,7 @@ while True:
             
 
             ############## STEP 6) CORRECTING INCORRECT CHESS BOARD ##################
-            move = input("What is your move (in algebraic notation)? ")
-            if (stockfish.is_move_correct(move)):
+            if (stockfish.is_move_correct(player_move)):
                 board_scan = True
             else:
                 fail_scan_coutner += 1

@@ -181,6 +181,16 @@ def board_localization(image, piece_data, corners, white_view, inner_grid, cw, c
             Y1 = round(tiles[piece_i][piece_j][3])
            
            # Crop the image to a width and height specified by cw and ch
+            # print("go")
+            # print(piece_i)
+            # print(piece_j)
+            # print(Y0)
+            # print(Y1)
+            # print(X0)
+            # print(X1)
+            # print(cw)
+            # print(ch)
+            # print("stop")
             crop = cv.resize(warped[Y0:Y1, min(X0,X1):max(X0,X1)], (cw, ch))
             if (flip): crop = cv.flip(crop, 1)
             if (not gather_piece_data): images.append(crop)
