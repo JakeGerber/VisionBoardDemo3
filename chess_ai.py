@@ -12,28 +12,29 @@ import pyautogui
 
 
 
+# IMPORT TEST DATA FILES
+# train_files = listdir("/Users/derky/Desktop/VBDemo3/val")
+# print(train_files)
+# #train_files = listdir()
+# #print(train_files)
 
-train_files = listdir("/Users/derky/Desktop/VBDemo3/val")
-print(train_files)
-#train_files = listdir()
-#print(train_files)
+# use_up_to = 2
 
-use_up_to = 2
+# print("JOE BIDEN 1")
+# print(train_files[0])
+# im = None
+# for imname in (train_files[:use_up_to] if use_up_to != None else train_files):
+#             x = imname.split('.')
+#             if (x[1] == "json"): continue
+#             x = x[0]
+#             print("JOE BIDEN")
+#             print(x)
+#             im = cv2.imread("/Users/derky/Desktop/VBDemo3/val/" + x + ".png")
+#             print(type(im))
 
-print("JOE BIDEN 1")
-print(train_files[0])
-for imname in (train_files[:use_up_to] if use_up_to != None else train_files):
-            x = imname.split('.')
-            if (x[1] == "json"): continue
-            x = x[0]
-            print("JOE BIDEN")
-            print(x)
-            im = cv2.imread("/Users/derky/Desktop/VBDemo3/val/" + x + ".png")
-            print(type(im))
-
-            cv2.imshow("Image", im)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+#             cv2.imshow("Image", im)
+#             cv2.waitKey(0)
+#             cv2.destroyAllWindows()
 
 
 # imma just test each sectio individually
@@ -115,12 +116,15 @@ while True:
 
         # Add a space bar to start the scan
             input("press the Enter key to continue: ")
+            cam = cv2.VideoCapture(0)
         
             while True: # Change while loop condition later
 
-                cam = cv2.VideoCapture(0)
+                
                 value, frame = cam.read()
                 fullImage = frame
+                # fullImage = im
+                # frame = im
                 frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 GRID = (7, 7)
 
@@ -128,11 +132,14 @@ while True:
                 found, corners = cv2.findChessboardCorners(frame2, GRID, None)
                 print("found: ", found, " corners: ", corners)
                 cv2.imshow("Camera View", frame)
+                print("joe biden 3")
 
                 if found:
                     img_captured_corners = cv2.drawChessboardCorners(frame, GRID, corners, found) # Can get rid of this in the final demo if we don't want to show the visualization
                     cv2.imshow("Camera View", img_captured_corners)
+                    print("FOUND CORNERS")
                     break
+                
 
                 if cv2.waitKey(1) == ord('q'):
                     break
