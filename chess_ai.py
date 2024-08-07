@@ -127,9 +127,7 @@ while True:
 
                 
                 value, frame = cam.read()
-                fullImage = frame
-                # fullImage = im
-                # frame = im
+                fullImage = np.array(frame)
                 frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 GRID = (7, 7)
 
@@ -178,11 +176,18 @@ while True:
                 # print(i[0][0])
             # print(formattedCornersList)
 
+            # only pass in corner pieces
             images, piece_images, piece_labels, empty_labels = model.board_localization(image= fullImage, piece_data=[], corners= formattedCornersList
                                                                                         , white_view= True, inner_grid= True, cw= 100, ch= 100,
                                                                                           gather_piece_data= False ) # Assumes that it will always be white view
+            
+            for img in images:
+                cv2.imshow("Tile View", img)
+                cv2.waitKey(0)
+                # cv2.destroyAllWindows()
+                # input("enter")
 
-
+            
 
 
             ############## STEP 3) DETECTING TILE OCCUPANCIES ##################

@@ -96,6 +96,7 @@ def board_localization(image, piece_data, corners, white_view, inner_grid, cw, c
     A = cv.getPerspectiveTransform(source_points, dest_points)
     warped = cv.warpPerspective(image, A, (width, height))
     
+    
     # Break into tiles
     # The warped perspective transform A does the following:
     # Given point (x, y), it gets mapped to (x', y') by
@@ -110,13 +111,18 @@ def board_localization(image, piece_data, corners, white_view, inner_grid, cw, c
     tiles = np.zeros((10, 10, 4))  # Tiles are represented by the top-left and bottom-right points.
     dx, dy = abs(warped_bottom_right[0] - warped_top_left[0]), abs(warped_bottom_right[1] - warped_top_left[1])
     # Tile side lengths in pixels (not perfect squares)
-    sx, sy = dx/8, dy/8
+    squares_used = 8 if (not inner_grid) else 6
+    sx, sy = dx/squares_used, dy/squares_used
 
     # If the corners actually specify the inner 6x6 set of tiles, extend the top left and bottom right so that
     # they reach the corners.
     if (inner_grid):
         warped_top_left = (warped_top_left[0] - sx, warped_top_left[1] - sy)
-        warped_bottom_right = (warped_bottom_right[0] - sx, warped_bottom_right[1] - sy)
+        warped_bottom_right = (warped_bottom_right[0] + sx, warped_bottom_right[1] + sy)
+    cv.circle(warped, (int(warped_top_left[0]), int(warped_top_left[1])), 2, (0,0,255), 3, cv.LINE_AA)
+    cv.circle(warped, (int(warped_bottom_right[0]), int(warped_bottom_right[1])), 2, (0,0,255), 3, cv.LINE_AA)
+    cv.imshow("Please fucking work", warped)
+    cv.waitKey()
     for i in range(-2, 8):
         y = warped_top_left[1] + sy * i
         next_y = warped_top_left[1] + sy * i + sy
@@ -179,6 +185,8 @@ def board_localization(image, piece_data, corners, white_view, inner_grid, cw, c
                 X1 = round((1-alpha) * tiles[piece_i-2][piece_j][2] + alpha * tiles[piece_i - 2][piece_j + 1][2])
             Y0 = round(tiles[piece_i - 2][piece_j][1])
             Y1 = round(tiles[piece_i][piece_j][3])
+            X0, X1 = min(max(X0, 0), width), min(max(X1, 0), width)
+            Y0, Y1 = min(max(Y0, 0), height), min(max(Y1, 0), height)
            
            # Crop the image to a width and height specified by cw and ch
             # print("go")
