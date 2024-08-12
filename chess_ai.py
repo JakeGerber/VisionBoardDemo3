@@ -53,7 +53,7 @@ elo = 1350
 occupancy_classifier_model = keras.models.load_model("occupancy_classifier.keras")
 piece_classifier_model = keras.models.load_model("piece_classifier.keras")
 
-current_board_state = [0]*64
+
 
 # Stockfish & board objects
 stockfish = Stockfish(path = "stockfish/stockfish-windows-x86-64-avx2.exe",
@@ -67,6 +67,31 @@ stockfish = Stockfish(path = "stockfish/stockfish-windows-x86-64-avx2.exe",
 stockfish.set_skill_level(skill_level)
 board = chess.Board()
 move_number = 1
+
+current_board_state = [0]*64
+
+# squares = [
+#             'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1',
+#             'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2',
+#             'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3', 'H3',
+#             'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4',
+#             'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5',
+#             'A6', 'B6', 'C6', 'D6', 'E6', 'F6', 'G6', 'H6',
+#             'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7',
+#             'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8',
+#         ]
+
+chess_squares = [
+    chess.A1, chess.B1, chess.C1, chess.D1, chess.E1, chess.F1, chess.G1, chess.H1,
+    chess.A2, chess.B2, chess.C2, chess.D2, chess.E2, chess.F2, chess.G2, chess.H2,
+    chess.A3, chess.B3, chess.C3, chess.D3, chess.E3, chess.F3, chess.G3, chess.H3,
+    chess.A4, chess.B4, chess.C4, chess.D4, chess.E4, chess.F4, chess.G4, chess.H4,
+    chess.A5, chess.B5, chess.C5, chess.D5, chess.E5, chess.F5, chess.G5, chess.H5,
+    chess.A6, chess.B6, chess.C6, chess.D6, chess.E6, chess.F6, chess.G6, chess.H6,
+    chess.A7, chess.B7, chess.C7, chess.D7, chess.E7, chess.F7, chess.G7, chess.H7,
+    chess.A8, chess.B8, chess.C8, chess.D8, chess.E8, chess.F8, chess.G8, chess.H8
+]
+
 print("Stockfish Setup Successful")
 # print(stockfish.get_board_visual(not is_white))
 print(board)
@@ -93,15 +118,58 @@ while True:
     # Ask the player or stockfish for their move.
     if (current_move == is_white):  # Stockfish's turn (Currently W and Stockfish W or currently B and Stockfish B)
         print("--------------AI's Turn--------------")
+        print("Who's Turn: ")
+        print(board.turn)
         move = stockfish.get_best_move()
+
+
         #moves = stockfish.get_top_moves(len(move_choice_dist))
         #choose_randomly = True
         #for i in range(len(move_choice_dist)):
         #    move = moves[i]
         #if (choose_randomly): move = np.random.choice(moves, )
 
+        piece_iterator = 0
+
+       
+
+        board.push(chess.Move.from_uci(move))
+        # chess.SQUARES
+        
+        print("joe biden")
+        new_detected_board_state = []
+        for square in chess_squares:
+            # print(square)
+            # square_coordinate = chess.SQUARES[square]
+            # print(square_coordinate)
+            #print(square_coordinate)
+
+            print(board.piece_at(square))
+            if board.piece_at(square) == None:
+                new_detected_board_state.append("E")
+            else:
+                new_detected_board_state.append(str(board.piece_at(square)))
+        print(new_detected_board_state)
+        current_board_state = new_detected_board_state
+        
+        # for occ in all_occupancies:
+        #     if occ == 0: # if empty
+        #         new_detected_board_state.append("E")
+        #     else: # if not empty
+        #         new_detected_board_state.append(all_pieces[piece_iterator])
+        #         piece_iterator += 1
+        
+
+
+
+
+
+
     else: # Player's turn
         print("---------------Player's Turn-------------------")
+
+        print("Who's Turn: ")
+        print(board.turn)
 
         ############## STEP 1) CHESS BOARD CORNER DETECTION ##################
         # GOAL: Return the locations of the corners of every tile on the board & return the source image 
@@ -188,55 +256,102 @@ while True:
                 # input("enter")
 
             
+            ################################ RUN STEP 3 & 4 5 TIMES ###################################
 
+            results_from_all_runs = []
+            num_of_runs = 5
 
-            ############## STEP 3) DETECTING TILE OCCUPANCIES ##################
-            # INPUT: 64 cropped images of each tile
-            # GOAL: Return a list of all tile's occupances, and a list of just the occupied tiles
+            for i in range(num_of_runs):
 
-            str_labels = ["Empty", "Not Empty"]
-            occupied_tiles = []
-            all_occupancies = []
-            for img in images:
-        
-                # Input img ---> img shape (100,100,3)
-                img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
-                pred = occupancy_classifier_model(img) # ---> pred shape (1, 2)
-                pred = np.reshape(pred, -1) # ---> pred shape now (2)
-                # pred[0] = probability of 0th class, pred[1] = probability of 1st class
-                # 0 class = empty, 1 class = occupied
-                label = np.argmax(pred)
-                all_occupancies.append(label)
-                if (label == 1):
-                    occupied_tiles.append(label)
+                ############## STEP 3) DETECTING TILE OCCUPANCIES ##################
+                # INPUT: 64 cropped images of each tile
+                # GOAL: Return a list of all tile's occupances, and a list of just the occupied tiles
 
-                # print("all occupancies")
-                # print(all_occupancies)
-                # print("occupied tiles")
-                # print(occupied_tiles)
-
-
-
-            ############## STEP 4) DETECTING TILE PIECES ##################
-            # INPUT: The list of images of tiles that are occupied
-            # GOAL: Return a list of all the tile's pieces
+                str_labels = ["Empty", "Not Empty"]
+                occupied_tiles = []
+                all_occupancies = []
+                for img in images:
             
-            str_labels = "PRNBQKprnbqk"
-            all_pieces = []
-            for i in range(64):
-                if all_occupancies[i] == 1:
-
                     # Input img ---> img shape (100,100,3)
-                    img = np.expand_dims(images[i], 0) # ---> img shape now (1,100,100,3)
-                    pred = piece_classifier_model(img) # ---> pred shape (1, 12)
-                    pred = np.reshape(pred, -1) # ---> pred shape now (12)
-                    # pred[i] = probability of ith class
-                    # Classes are in order "PRNBQKprnbqk"
+                    img = np.expand_dims(img, 0) # ---> img shape now (1,100,100,3)
+                    pred = occupancy_classifier_model(img) # ---> pred shape (1, 2)
+                    pred = np.reshape(pred, -1) # ---> pred shape now (2)
+                    # pred[0] = probability of 0th class, pred[1] = probability of 1st class
+                    # 0 class = empty, 1 class = occupied
                     label = np.argmax(pred)
-                    all_pieces.append(label)
+                    all_occupancies.append(label)
+                    if (label == 1):
+                        occupied_tiles.append(label)
+
+                    # print("all occupancies")
+                    # print(all_occupancies)
+                    # print("occupied tiles")
+                    # print(occupied_tiles)
+
+
+
+                ############## STEP 4) DETECTING TILE PIECES ##################
+                # INPUT: The list of images of tiles that are occupied
+                # GOAL: Return a list of all the tile's pieces
+                
+                str_labels = "PRNBQKprnbqk"
+                all_pieces = []
+                for i in range(64):
+                    if all_occupancies[i] == 1:
+
+                        # Input img ---> img shape (100,100,3)
+                        img = np.expand_dims(images[i], 0) # ---> img shape now (1,100,100,3)
+                        pred = piece_classifier_model(img) # ---> pred shape (1, 12)
+                        pred = np.reshape(pred, -1) # ---> pred shape now (12)
+                        # pred[i] = probability of ith class
+                        # Classes are in order "PRNBQKprnbqk"
+                        label = np.argmax(pred)
+                        all_pieces.append(label)
+                
+                # print("all pieces")
+                # print(all_pieces)
+
+
+
+                # Combining the two arrays into one that states empty or piece type
+
+                new_detected_board_state = []
+                piece_iterator = 0
+                str_labels = "PRNBQKprnbqk"
+
+                for occ in all_occupancies:
+                    if occ == 0: # if empty
+                        new_detected_board_state.append("E")
+                    else: # if not empty
+                        new_detected_board_state.append(str_labels[all_pieces[piece_iterator]])
+                        piece_iterator += 1
+                print("board joey bidussy")
+                print(new_detected_board_state)
+
+                # ADD THE ALL PIECES RESULT TO THE results_from_5_runs List
+                results_from_all_runs.append(new_detected_board_state)
             
-            # print("all pieces")
-            # print(all_pieces)
+
+
+
+
+
+            ################## STEP 4.5) TAKE THE MOST COMMON RESULT AND MAKE NEW_DETECTED_BOARD_STATE ########################
+            # print("all runs results")
+            # print(results_from_all_runs)
+            final_new_detected_board_state = []
+            for i in range(64):
+                current_tile = []
+                for j in range(num_of_runs):
+                    current_tile.append(results_from_all_runs[j][i])
+                final_new_detected_board_state.append(max(set(current_tile), key=current_tile.count))
+
+            print("############## FINAL BOARD STATE ######################")
+            print(final_new_detected_board_state)
+            print("####################")
+                
+
+
 
 
         
@@ -246,17 +361,7 @@ while True:
 
 
 
-            # Combining the two arrays into one that states empty or piece type
-
-            new_detected_board_state = []
-            piece_iterator = 0
-
-            for occ in all_occupancies:
-                if occ == 0: # if empty
-                    new_detected_board_state.append("E")
-                else: # if not empty
-                    new_detected_board_state.append(all_pieces[piece_iterator])
-                    piece_iterator += 1
+                
                 
             # print("new detected board state")
             # print(new_detected_board_state)
@@ -268,7 +373,7 @@ while True:
             # print(chess.Move.uci((joe[0])))
             # # print(stockfish.get_board_visual(not is_white))
             # print(board)
-            board.push_uci(chess.Move.uci(joe[0]))
+            # board.push_uci(chess.Move.uci(joe[0]))
             # print("-------------------------------------")
             # # print(stockfish.get_board_visual(not is_white))
             # print(board)
@@ -291,12 +396,12 @@ while True:
                         ]
             new_board = [
                         7, 8, 9, 10, 11, 9, 8, 7,
-                        6, 6, 6, 6, 6, 6, 6, 6,
+                        "E", 6, 6, 6, 6, 6, 6, 6,
+                        "E", "E", "E", "E", "E", "E", "E", "E",
+                        6, "E", "E", "E", "E", "E", "E", "E",
                         "E", "E", "E", "E", "E", "E", "E", "E",
                         "E", "E", "E", "E", "E", "E", "E", "E",
-                        0, "E", "E", "E", "E", "E", "E", "E",
-                        "E", "E", "E", "E", "E", "E", "E", "E",
-                        "E", 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0,
                         1, 2, 3, 4, 5, 3, 2, 1
                         ]
             
@@ -308,6 +413,9 @@ while True:
         
             # then compare this fenstring with the previous fen string??
             # because we need to input the movement, not the board, i need to find out how to calculate the movment 
+
+
+            print(new_detected_board_state)
 
             index_difference = []
             for i in range(64):
@@ -345,16 +453,42 @@ while True:
             player_move = ""
 
             if len(index_difference) == 2:
-                if new_detected_board_state[index_difference[0]] == 0:
-                    player_move = player_move + board_location_dictionary[index_difference[1]]
-                    player_move = player_move + board_location_dictionary[index_difference[0]]
-                elif new_detected_board_state[index_difference[1]] == 0:
+                if new_detected_board_state[index_difference[0]] == "E":
                     player_move = player_move + board_location_dictionary[index_difference[0]]
                     player_move = player_move + board_location_dictionary[index_difference[1]]
+                elif new_detected_board_state[index_difference[1]] == "E":
+                    player_move = player_move + board_location_dictionary[index_difference[1]]
+                    player_move = player_move + board_location_dictionary[index_difference[0]]
+                else:
+                    print("castling??")
+
+            #detect castling
+            if len(index_difference) == 4:
+                if  new_detected_board_state[index_difference[62]] == "K" and new_detected_board_state[index_difference[61]] == "R":
+                    player_move = "e1g1"
+                elif new_detected_board_state[index_difference[58]] == "K" and new_detected_board_state[index_difference[61]] == "R":
+                    player_move = "e1c1"
+                elif new_detected_board_state[index_difference[6]] == "k" and new_detected_board_state[index_difference[5]] == "r":
+                    player_move = "e8g8"
+                elif new_detected_board_state[index_difference[2]] == "k" and new_detected_board_state[index_difference[3]] == "r":
+                    player_move = "e8c8"
+
+            
+            # OKAY NOW ADD A FUNCTIONALITY FOR PROMOTION
+                
+
+
+
+                for i in index_difference:
+                    if i == 62 and new_detected_board_state[index_difference[i]] == "K" and :
+
+
+                    if new_detected_board_state[index_difference[i]] == "K" or new_detected_board_state[index_difference[i]] == "k":
+                        pass
         
             print("player move")
             print(player_move)
-            move = player_move
+            # move = player_move
 
 
 
@@ -363,8 +497,11 @@ while True:
 
             ############## STEP 6) CORRECTING INCORRECT CHESS BOARD ##################
             # if (stockfish.is_move_correct(player_move)):
+            # print(board)
+            # print(list(board.legal_moves))
             if (chess.Move.from_uci(player_move) in board.legal_moves):
                 board_scan = True
+                board.push(chess.Move.from_uci(player_move))
                 
 
                 # print("------------------ GOT HERE ----------------------------------")
@@ -374,6 +511,8 @@ while True:
             if fail_scan_coutner >= 5:
                 print("Move invalid. Please try again.")
                 fail_scan_coutner = 0
+
+        # board.push(chess.Move.from_uci(move))
 
 
         # print(board.legal_moves)
@@ -386,9 +525,14 @@ while True:
         
 
     # Update the board state.
-    board.push(chess.Move.from_uci(move))
+    
     #print(stockfish.get_board_visual(not is_white))
     print(board)
+    print("piece map")
+    print(board.piece_map)
+    #squares = chess.SquareSet()
+    #print(squares)
+    print(board.piece_at(chess.A1))
     current_move = not current_move
     move_number += 1
 
