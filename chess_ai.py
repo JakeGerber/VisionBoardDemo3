@@ -60,45 +60,34 @@ print(board)
 
 
 
-############### SCAN THE BOARD #######################
+############### PRE-STEP 0) SCAN THE BOARD FOR THE CORNERS #######################
 img_captured_corners = None # The corners returned by the chess board detector --> later fed into the board localization function
 fullImage = None 
 input("press the Enter key to scan board: ")
 cam = cv2.VideoCapture(0)
 while True: # Change while loop condition later
-
-                
+         
     value, frame = cam.read()
     fullImage = np.array(frame)
     frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     GRID = (7, 7)
 
-    # Should i just save "corners" or "img_captured_corners"
     found, cornersList = cv2.findChessboardCorners(frame2, GRID, None)
-    # print("found: ", found, " corners: ", cornersList)
     cv2.imshow("Camera View", frame)
-    # print("joe biden 3")
-
     if found:
         img_captured_corners = cv2.drawChessboardCorners(frame, GRID, cornersList, found) # Can get rid of this in the final demo if we don't want to show the visualization
         cv2.imshow("Camera View", img_captured_corners)
-        # print("FOUND CORNERS")
         break
-
-
     if cv2.waitKey(1) == ord('q'):
-        break        
+        break    
 
-
+# formats array to work with the board localization function
 formattedCornersList = []
 for i in cornersList:
     formattedCornersList.append([i[0][0], i[0][1]])
             
 
-
-
-
-# This is the game loop for chess
+######################## MAIN GAME LOOP ##############################
 current_move = True # True = white, False = black
 while True:
     
@@ -119,10 +108,9 @@ while True:
     if (board.is_check()): print("Check for " + ("White" if current_move else "Black") + "!")
 
     # Ask the player or stockfish for their move.
+    ################################## AI TURN ###########################################
     if (current_move == is_white):  # Stockfish's turn (Currently W and Stockfish W or currently B and Stockfish B)
         print("--------------AI's Turn--------------")
-        print("Who's Turn: ")
-        print(board.turn)
         move = stockfish.get_best_move()
         #moves = stockfish.get_top_moves(len(move_choice_dist))
         #choose_randomly = True
@@ -135,49 +123,33 @@ while True:
         # looks through the AIs turn and formats it to an array. This array is used to compare past and new states, which is important for understanding what the player's move was.
         new_detected_board_state = []
         for square in chess_squares:
-
-
-            print(board.piece_at(square))
             if board.piece_at(square) == None:
                 new_detected_board_state.append("E")
             else:
                 new_detected_board_state.append(str(board.piece_at(square)))
-        print(new_detected_board_state)
+        # print(new_detected_board_state)
         current_board_state = new_detected_board_state
         
         
 
-
+    ############################## PLAYERS TURN ########################################
     else: # Player's turn
         print("---------------Player's Turn-------------------")
 
-        print("Who's Turn: ")
-        print(board.turn)
-
-        ############## STEP 1) CHESS BOARD CORNER DETECTION ##################
-        # GOAL: Return the locations of the corners of every tile on the board & return the source image 
-
-
-        # the black and white photo of the 
-
-        # Continue to scan the video input (frame by frame) for a chessboard
-        # If found, print visualization and break out of loop, also returns the corners of the chess board (only inner corners)
-        # If not found, continue to scan for board
-        # Note: Do we want to scan for the board every time it is the player's turn, or just once at the beginning 
-
-
+        ############## STEP 1) CHESS BOARD FRAME SCAN ##################
+        # GOAL: scan a frame of the board. This doesn't get any new coordinates, it uses the coordinates that were scanned at the begining
+        # SO it is important that the board didn't move
 
         board_scan = False # Continue scanning until successfully scans the board
         fail_scan_coutner = 0
+
         while board_scan == False:
 
         # Add a space bar to start the scan
             input("press the Enter key to confirm your turn: ")
-
-
+            print("during testing, PRESS Q to double confirm scan")
             cam = cv2.VideoCapture(0)
             while True: # Change while loop condition later
-          
                 value, frame = cam.read()
                 fullImage = np.array(frame)
                 frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -194,29 +166,12 @@ while True:
             # GOAL: Return a list of images of all 64 tiles
 
 
-            # Question! What is the purpose of gather_piece_data? #does this only work if you were given the metadata?
-            # oh i see, when actually running this images should be the only thing it returns?
-
-
-            # Should only return 64 cut up images, the others should be empty arrays 
-
-            # print(cornersList[0])
-            # print(cornersList[0])
-            # print("-----------------------")
-            # print(cornersList[0][0])
-            # print(len(cornersList[0][0]))
-
-            
-                # print(i[0])
-                # print("gay")
-                # print(i[0][0])
-            # print(formattedCornersList)
-
-            # only pass in corner pieces
-            print("got here")
+            print("Click on the picture and then click the right arrow to look at all the tile scans")
+            # only pass in corner pieces # have not done that yet oops, but it still works!
             images, piece_images, piece_labels, empty_labels = model.board_localization(image= fullImage, piece_data=[], corners= formattedCornersList
                                                                                         , white_view= True, inner_grid= True, cw= 100, ch= 100,
                                                                                           gather_piece_data= False ) # Assumes that it will always be white view
+            
             
             for img in images:
                 cv2.imshow("Tile View", img)
@@ -224,9 +179,8 @@ while True:
                 # cv2.destroyAllWindows()
                 # input("enter")
 
-            print("got here 2")
             
-            ################################ RUN STEP 3 & 4 5 TIMES ###################################
+            ################################ RUN STEP 3 & 4 MULTIPLE TIMES ###################################
 
             results_from_all_runs = []
             num_of_runs = 5
@@ -253,10 +207,6 @@ while True:
                     if (label == 1):
                         occupied_tiles.append(label)
 
-                    # print("all occupancies")
-                    # print(all_occupancies)
-                    # print("occupied tiles")
-                    # print(occupied_tiles)
 
 
 
@@ -277,14 +227,9 @@ while True:
                         # Classes are in order "PRNBQKprnbqk"
                         label = np.argmax(pred)
                         all_pieces.append(label)
-                
-                # print("all pieces")
-                # print(all_pieces)
-
 
 
                 # Combining the two arrays into one that states empty or piece type
-
                 new_detected_board_state = []
                 piece_iterator = 0
                 str_labels = "PRNBQKprnbqk"
@@ -296,7 +241,7 @@ while True:
                         new_detected_board_state.append(str_labels[all_pieces[piece_iterator]])
                         piece_iterator += 1
                 print("board joey bidussy")
-                print(new_detected_board_state)
+                # print(new_detected_board_state)
 
                 # ADD THE ALL PIECES RESULT TO THE results_from_5_runs List
                 results_from_all_runs.append(new_detected_board_state)
@@ -315,12 +260,9 @@ while True:
                 for j in range(num_of_runs):
                     current_tile.append(results_from_all_runs[j][i])
                 final_new_detected_board_state.append(max(set(current_tile), key=current_tile.count))
-
-            print("############## FINAL BOARD STATE ######################")
-            print(final_new_detected_board_state)
-            print("####################")
+            # print("FINAL BOARD STATE")
+            # print(final_new_detected_board_state)
                 
-
 
 
 
@@ -330,28 +272,8 @@ while True:
             # GOAL: Input the board data into stockfish and update board game state
 
 
-
-                
-                
-            # print("new detected board state")
-            # print(new_detected_board_state)
-            # print(board.legal_moves)
-            joe = list(board.legal_moves)
-            # print(joe)
-            # print("joe")
-            # print(type(chess.Move.uci((joe[0]))))
-            # print(chess.Move.uci((joe[0])))
-            # # print(stockfish.get_board_visual(not is_white))
-            # print(board)
-            # board.push_uci(chess.Move.uci(joe[0]))
-            # print("-------------------------------------")
-            # # print(stockfish.get_board_visual(not is_white))
-            # print(board)
-            # # input("press the Enter key to continue: ")
-
-
-#             [0, 4, 'E', 'E', 'E', 9, 'E', 7, 4, 3, 2, 'E', 'E', 'E', 'E', 8, 0, 'E', 4, 4, 'E', 'E', 9, 9, 'E', 0, 'E', 4, 0, 'E', 0, 9, 'E', 'E', 'E', 'E', 0, 3, 4, 5, 'E', 'E', 2, 2, 2, 4, 2, 0, 'E', 'E', 2, 2, 4, 'E', 2, 2, 
-# 0, 0, 4, 2, 2, 'E', 'E', 4]
+            # These two board representations are fillers, until we can get the actualy board ai implemted
+            # NOTE: instead of numbers, it should be letters, but hopefully it will still work if that is changed... should be a small change
 
             str_labels = "PRNBQKprnbqk"
             old_board = [
@@ -377,37 +299,17 @@ while True:
             
             current_board_state = old_board
             new_detected_board_state = new_board
+            # print(new_detected_board_state)
 
-
-
-        
-            # then compare this fenstring with the previous fen string??
-            # because we need to input the movement, not the board, i need to find out how to calculate the movment 
-
-
-            print(new_detected_board_state)
-
+            # this goes through the old and new board state, and when it finds a difference, it stores the index of the tile
             index_difference = []
             for i in range(64):
                 if current_board_state[i] != new_detected_board_state[i]:
                     index_difference.append(i)
 
-            print("index difference")
-            print(index_difference)
+            # print("index difference")
+            # print(index_difference)
 
-
-            # if more than two differences, rescane (can there be more than movement per turn? can u hop like checkers? i forgor)
-
-            # convert the index of the different tiles into the coordinates and write it in algebraic notation
-            # maybe just hardcode this as a dictionary?
-
-            # gives this movement to the stock fish api
-
-            # board.piece_at() LOOK INTO THIS
-
-            # Look at the two different tiles and append the black one first
-
-            # board_location_dictionary = {1 : "h1", 2: "g1", 3: "f1", 4: "e1", 5: "d1", 6: "c1", 7: "b1", 8:"a1"}
             board_location_dictionary = {
                             0: "a8", 1: "b8", 2: "c8", 3: "d8", 4: "e8", 5: "f8", 6: "g8", 7: "h8",
                             8: "a7", 9: "b7", 10: "c7", 11: "d7", 12: "e7", 13: "f7", 14: "g7", 15: "h7",
@@ -419,9 +321,10 @@ while True:
                             56: "a1", 57: "b1", 58: "c1", 59: "d1", 60: "e1", 61: "f1", 62: "g1", 63: "h1"
                         }
 
-
             player_move = ""
 
+
+            # looks through the index difference, and formats in the UCI move format. puts the empty tile first, then the tile where the piece moved
             if len(index_difference) == 2:
                 if new_detected_board_state[index_difference[0]] == "E":
                     player_move = player_move + board_location_dictionary[index_difference[0]]
@@ -432,7 +335,7 @@ while True:
                 else:
                     print("castling??")
 
-            #detect castling
+            #detect castling. there are 4 castling cases, so i just hard coded them in
             if len(index_difference) == 4:
                 if  new_detected_board_state[index_difference[62]] == "K" and new_detected_board_state[index_difference[61]] == "R":
                     player_move = "e1g1"
@@ -452,7 +355,6 @@ while True:
 
 
 
-            #maybe use set_piece_at(), set_board_fen(), set_piece_map()
             
 
             ############## STEP 6) CORRECTING INCORRECT CHESS BOARD ##################
@@ -467,19 +369,10 @@ while True:
                 # print("------------------ GOT HERE ----------------------------------")
             else:
                 fail_scan_coutner += 1
-                print("----------------------- POOOOP ---------------------------------")
+                print("----------------------- Please Rescan ---------------------------------")
             if fail_scan_coutner >= 5:
                 print("Move invalid. Please try again.")
                 fail_scan_coutner = 0
-
-        # board.push(chess.Move.from_uci(move))
-
-
-        # print(board.legal_moves)
-        # 
-
-
-
 
 
         
@@ -488,53 +381,8 @@ while True:
     
     #print(stockfish.get_board_visual(not is_white))
     print(board)
-    print("piece map")
-    print(board.piece_map)
-    #squares = chess.SquareSet()
-    #print(squares)
-    print(board.piece_at(chess.A1))
     current_move = not current_move
     move_number += 1
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-              # # loop through the results and make a fenstring
-            # #   make a new list represnting the fenstring (or maybe string?)
-            # #   loop through the list of all occupancies
-            # #   if unoccupied, continue to go until you reach an occupied one, then add a number to the fenstring to represent the length of empty spaces to the list
-            # #   if occupied, add the letter representing the piece to the list
-
-
-
-            # # Turn the two array outputs from the model into a single fenstring
-            # fenstring = ""
-            # length_of_empty_spaces = 0
-            # piece_iterator = 0
-            # tile_counter = 0 # or 0?
-
-            # for occ in all_occupancies:
-            #     if occ == 0: # if empty
-            #         length_of_empty_spaces += 1
-            #         tile_counter += 1
-            #     else: # if not empty
-            #         if length_of_empty_spaces != 0:
-            #             fenstring = fenstring + length_of_empty_spaces
-            #             length_of_empty_spaces = 0
-            #         fenstring = fenstring + all_pieces[piece_iterator]
-            #         piece_iterator += 1
-            #         tile_counter += 1
-            #     if tile_counter % 8 == 0 and tile_counter != 64: # && 
-            #         fenstring = fenstring + "/" # does this accidentally add a dash at the end of the fenstring
