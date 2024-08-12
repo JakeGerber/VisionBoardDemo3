@@ -475,17 +475,7 @@ while True:
 
             
             # OKAY NOW ADD A FUNCTIONALITY FOR PROMOTION
-                
-
-
-
-                for i in index_difference:
-                    if i == 62 and new_detected_board_state[index_difference[i]] == "K" and :
-
-
-                    if new_detected_board_state[index_difference[i]] == "K" or new_detected_board_state[index_difference[i]] == "k":
-                        pass
-        
+           
             print("player move")
             print(player_move)
             # move = player_move
