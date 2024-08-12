@@ -96,6 +96,54 @@ print("Stockfish Setup Successful")
 # print(stockfish.get_board_visual(not is_white))
 print(board)
 
+
+############### SCAN THE BOARD #######################
+img_captured_corners = None # The corners returned by the chess board detector --> later fed into the board localization function
+fullImage = None 
+input("press the Enter key to scan board: ")
+cam = cv2.VideoCapture(0)
+while True: # Change while loop condition later
+
+                
+    value, frame = cam.read()
+    fullImage = np.array(frame)
+    frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    GRID = (7, 7)
+
+    # Should i just save "corners" or "img_captured_corners"
+    found, cornersList = cv2.findChessboardCorners(frame2, GRID, None)
+    # print("found: ", found, " corners: ", cornersList)
+    cv2.imshow("Camera View", frame)
+    # print("joe biden 3")
+
+    if found:
+        img_captured_corners = cv2.drawChessboardCorners(frame, GRID, cornersList, found) # Can get rid of this in the final demo if we don't want to show the visualization
+        cv2.imshow("Camera View", img_captured_corners)
+        # print("FOUND CORNERS")
+        break
+
+
+    if cv2.waitKey(1) == ord('q'):
+        break        
+
+
+formattedCornersList = []
+for i in cornersList:
+    formattedCornersList.append([i[0][0], i[0][1]])
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
 current_move = True # True = white, False = black
 while True:
     
@@ -175,45 +223,34 @@ while True:
         # GOAL: Return the locations of the corners of every tile on the board & return the source image 
 
 
-        img_captured_corners = None # The corners returned by the chess board detector --> later fed into the board localization function
-        fullImage = None # the black and white photo of the 
+        # the black and white photo of the 
 
         # Continue to scan the video input (frame by frame) for a chessboard
         # If found, print visualization and break out of loop, also returns the corners of the chess board (only inner corners)
         # If not found, continue to scan for board
         # Note: Do we want to scan for the board every time it is the player's turn, or just once at the beginning 
 
+
+
         board_scan = False # Continue scanning until successfully scans the board
         fail_scan_coutner = 0
         while board_scan == False:
 
         # Add a space bar to start the scan
-            input("press the Enter key to continue: ")
-            cam = cv2.VideoCapture(0)
-        
-            while True: # Change while loop condition later
+            input("press the Enter key to confirm your turn: ")
 
-                
+
+            cam = cv2.VideoCapture(0)
+            while True: # Change while loop condition later
+          
                 value, frame = cam.read()
                 fullImage = np.array(frame)
                 frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 GRID = (7, 7)
-
-                # Should i just save "corners" or "img_captured_corners"
-                found, cornersList = cv2.findChessboardCorners(frame2, GRID, None)
-                # print("found: ", found, " corners: ", cornersList)
                 cv2.imshow("Camera View", frame)
-                # print("joe biden 3")
-
-                if found:
-                    img_captured_corners = cv2.drawChessboardCorners(frame, GRID, cornersList, found) # Can get rid of this in the final demo if we don't want to show the visualization
-                    cv2.imshow("Camera View", img_captured_corners)
-                    # print("FOUND CORNERS")
-                    break
-                
 
                 if cv2.waitKey(1) == ord('q'):
-                    break
+                    break        
 
             
 
@@ -234,17 +271,14 @@ while True:
             # print(cornersList[0][0])
             # print(len(cornersList[0][0]))
 
-            formattedCornersList = []
-            for i in cornersList:
-                # print(i)
-                # print("boob")
-                formattedCornersList.append([i[0][0], i[0][1]])
+            
                 # print(i[0])
                 # print("gay")
                 # print(i[0][0])
             # print(formattedCornersList)
 
             # only pass in corner pieces
+            print("got here")
             images, piece_images, piece_labels, empty_labels = model.board_localization(image= fullImage, piece_data=[], corners= formattedCornersList
                                                                                         , white_view= True, inner_grid= True, cw= 100, ch= 100,
                                                                                           gather_piece_data= False ) # Assumes that it will always be white view
@@ -255,6 +289,7 @@ while True:
                 # cv2.destroyAllWindows()
                 # input("enter")
 
+            print("got here 2")
             
             ################################ RUN STEP 3 & 4 5 TIMES ###################################
 
