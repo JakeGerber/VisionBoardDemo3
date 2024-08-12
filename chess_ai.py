@@ -8,36 +8,11 @@ import keras
 import pyautogui
 
 
-# I GOTTA COMMENT MY CODE FIRST
 
 
 
-# IMPORT TEST DATA FILES
-# train_files = listdir("/Users/derky/Desktop/VBDemo3/val")
-# print(train_files)
-# #train_files = listdir()
-# #print(train_files)
-
-# use_up_to = 2
-
-# print("JOE BIDEN 1")
-# print(train_files[0])
-# im = None
-# for imname in (train_files[:use_up_to] if use_up_to != None else train_files):
-#             x = imname.split('.')
-#             if (x[1] == "json"): continue
-#             x = x[0]
-#             print("JOE BIDEN")
-#             print(x)
-#             im = cv2.imread("/Users/derky/Desktop/VBDemo3/val/" + x + ".png")
-#             print(type(im))
-
-#             cv2.imshow("Image", im)
-#             cv2.waitKey(0)
-#             cv2.destroyAllWindows()
 
 
-# imma just test each sectio individually
 
 
 # TODO:
@@ -67,20 +42,7 @@ stockfish = Stockfish(path = "stockfish/stockfish-windows-x86-64-avx2.exe",
 stockfish.set_skill_level(skill_level)
 board = chess.Board()
 move_number = 1
-
 current_board_state = [0]*64
-
-# squares = [
-#             'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1',
-#             'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2',
-#             'A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3', 'H3',
-#             'A4', 'B4', 'C4', 'D4', 'E4', 'F4', 'G4', 'H4',
-#             'A5', 'B5', 'C5', 'D5', 'E5', 'F5', 'G5', 'H5',
-#             'A6', 'B6', 'C6', 'D6', 'E6', 'F6', 'G6', 'H6',
-#             'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7',
-#             'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8',
-#         ]
-
 chess_squares = [
     chess.A1, chess.B1, chess.C1, chess.D1, chess.E1, chess.F1, chess.G1, chess.H1,
     chess.A2, chess.B2, chess.C2, chess.D2, chess.E2, chess.F2, chess.G2, chess.H2,
@@ -95,6 +57,7 @@ chess_squares = [
 print("Stockfish Setup Successful")
 # print(stockfish.get_board_visual(not is_white))
 print(board)
+
 
 
 ############### SCAN THE BOARD #######################
@@ -135,15 +98,7 @@ for i in cornersList:
 
 
 
-
-
-
-
-
-
-
-
-
+# This is the game loop for chess
 current_move = True # True = white, False = black
 while True:
     
@@ -169,28 +124,18 @@ while True:
         print("Who's Turn: ")
         print(board.turn)
         move = stockfish.get_best_move()
-
-
         #moves = stockfish.get_top_moves(len(move_choice_dist))
         #choose_randomly = True
         #for i in range(len(move_choice_dist)):
         #    move = moves[i]
         #if (choose_randomly): move = np.random.choice(moves, )
-
         piece_iterator = 0
-
-       
-
         board.push(chess.Move.from_uci(move))
-        # chess.SQUARES
-        
-        print("joe biden")
+
+        # looks through the AIs turn and formats it to an array. This array is used to compare past and new states, which is important for understanding what the player's move was.
         new_detected_board_state = []
         for square in chess_squares:
-            # print(square)
-            # square_coordinate = chess.SQUARES[square]
-            # print(square_coordinate)
-            #print(square_coordinate)
+
 
             print(board.piece_at(square))
             if board.piece_at(square) == None:
@@ -200,17 +145,7 @@ while True:
         print(new_detected_board_state)
         current_board_state = new_detected_board_state
         
-        # for occ in all_occupancies:
-        #     if occ == 0: # if empty
-        #         new_detected_board_state.append("E")
-        #     else: # if not empty
-        #         new_detected_board_state.append(all_pieces[piece_iterator])
-        #         piece_iterator += 1
         
-
-
-
-
 
 
     else: # Player's turn
