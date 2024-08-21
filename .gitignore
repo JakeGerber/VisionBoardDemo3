@@ -1,1 +1,5 @@
 Data/
+piece_classifier.keras
+occupancy_classifier.keras
+piece_classifier_finetuned.keras
+occupancy_classifier_finetuned.keras

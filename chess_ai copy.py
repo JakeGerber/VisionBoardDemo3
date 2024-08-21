@@ -25,8 +25,8 @@ skill_level = 12
 depth = 15
 min_think_time = 15
 elo = 1350
-occupancy_classifier_model = keras.models.load_model("occupancy_classifier.keras")
-piece_classifier_model = keras.models.load_model("piece_classifier.keras")
+occupancy_classifier_model = keras.models.load_model("occupancy_classifier_finetuned.keras")
+piece_classifier_model = keras.models.load_model("piece_classifier_finetuned.keras")
 
 
 
@@ -104,6 +104,8 @@ for i in cornersList:
 
 
 test_round = 0
+
+input("Set up the board and press Enter to continue: ")
             
 
 ######################## MAIN GAME LOOP ##############################
@@ -132,9 +134,9 @@ while True:
     if (current_move == is_white):  # Stockfish's turn (Currently W and Stockfish W or currently B and Stockfish B)
         print("--------------AI's Turn--------------")
         move = stockfish.get_best_move()
-        if test_round == 0:
-            move = "a2a4"
-            test_round = 1
+        # if test_round == 0:
+        #     move = "a2a4"
+        #     test_round = 1
         print(list(board.legal_moves))
         #moves = stockfish.get_top_moves(len(move_choice_dist))
         #choose_randomly = True
@@ -264,7 +266,7 @@ while True:
                     else: # if not empty
                         new_detected_board_state.append(str_labels[all_pieces[piece_iterator]])
                         piece_iterator += 1
-                print("board joey bidussy")
+                # print("board joey bidussy")
                 # print(new_detected_board_state)
 
                 # ADD THE ALL PIECES RESULT TO THE results_from_5_runs List
@@ -284,8 +286,9 @@ while True:
                 for j in range(num_of_runs):
                     current_tile.append(results_from_all_runs[j][i])
                 final_new_detected_board_state.append(max(set(current_tile), key=current_tile.count))
-            # print("FINAL BOARD STATE")
-            # print(final_new_detected_board_state)
+            final_new_detected_board_state = results_from_all_runs[0]
+            print("FINAL BOARD STATE")
+            print(final_new_detected_board_state)
                 
 
 
@@ -323,7 +326,7 @@ while True:
                         "R", "N", "B", "Q", "K", "B", "N", "R"
                         ]
             
-            final_new_detected_board_state = new_board
+            # final_new_detected_board_state = new_board
 
 
 
@@ -336,9 +339,10 @@ while True:
                 board_copy = board.copy()
                 print(legal_move)
                 print(type(legal_move))
-                print(board_copy)
+                # print(board_copy)
                 board_copy.push(legal_move)
-                print(board_copy)
+                # print("possible legal board if move was taken")
+                # print(board_copy)
                 board_copy_state = []
                 for square in chess_squares:
                     if board_copy.piece_at(square) == None:
@@ -347,9 +351,17 @@ while True:
                         board_copy_state.append(str(board_copy.piece_at(square)))
                 # board_copy_state.reverse()
                 print("board copy state")
-                print(board_copy_state)
+                #print(board_copy_state)
+                for i in range(8):
+                    for j in range(8):
+                        print(board_copy_state[8*i + j], end="")
+                    print()
                 print("final new detected board state")
-                print(final_new_detected_board_state)
+                for i in range(8):
+                    for j in range(8):
+                        print(final_new_detected_board_state[8*i + j], end="")
+                    print()
+                #print(final_new_detected_board_state)
                 if board_copy_state == final_new_detected_board_state:
                     print(legal_move)
                     board.push(legal_move)
